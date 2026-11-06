@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开窍鸦思辨 · 档案智能体 v0.2</title>
+<style>
+:root{
+  --bg:#f7f7f5; --card:#fff; --line:#e6e4de; --line2:#d3d1c7;
+  --text:#2c2c2a; --text2:#5f5e5a; --text3:#888780;
+  --p:#534ab7; --p-bg:#eeedfe; --p-line:#cecbf6;
+  --t:#0f6e56; --t-bg:#e1f5ee; --t-line:#9fe1cb;
+  --a:#854f0b; --a-bg:#faeeda; --a-line:#fac775;
+  --r:#a32d2d; --r-bg:#fcebeb; --r-line:#f7c1c1;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+.hidden{display:none!important}
+
+/* 登录 */
+#loginView{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:30}
+.login-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:36px 40px;width:360px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.login-card img{height:44px;display:block;margin:0 auto 8px}
+.login-card h1{font-size:15px;font-weight:500;text-align:center;margin-bottom:4px}
+.login-card p{font-size:12px;color:var(--text3);text-align:center;margin-bottom:20px}
+.login-card input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;margin-bottom:12px;font-family:inherit}
+.login-card input:focus{outline:none;border-color:var(--p)}
+.login-card .err{color:var(--r);font-size:12px;min-height:18px;margin-bottom:6px;text-align:center}
+.demo-hint{font-size:12px;color:var(--text3);text-align:center;margin-top:10px}
+
+/* 公告弹窗 */
+#notice{position:fixed;inset:0;background:rgba(30,28,50,.35);display:flex;align-items:center;justify-content:center;z-index:40}
+.notice-card{background:var(--card);border-radius:16px;padding:28px 32px;width:460px;max-height:80vh;overflow:auto}
+.notice-card h2{font-size:15px;font-weight:500;margin-bottom:4px}
+.notice-card .sub{font-size:12px;color:var(--text3);margin-bottom:16px}
+.notice-card li{font-size:13px;color:var(--text2);margin-bottom:10px;list-style:none;padding-left:22px;position:relative}
+.notice-card li:before{content:"";position:absolute;left:6px;top:9px;width:6px;height:6px;border-radius:50%;background:var(--p)}
+
+/* 主界面 */
+#app{display:flex;min-height:100vh}
+aside{width:216px;background:var(--card);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+aside .brand{display:flex;align-items:center;gap:10px;padding:4px 6px 16px;border-bottom:1px solid var(--line);margin-bottom:14px}
+aside .brand img{height:32px}
+aside .brand div b{font-size:13px;font-weight:500;display:block}
+aside .brand div span{font-size:11px;color:var(--text3)}
+aside .user{font-size:12px;color:var(--text2);background:#faf9f6;border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-bottom:12px}
+aside button.nav{border:none;background:none;text-align:left;padding:9px 12px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;font-family:inherit}
+aside button.nav:hover{background:#f3f2ef}
+aside button.nav.on{background:var(--p-bg);color:var(--p);font-weight:500}
+aside .bottom{margin-top:auto}
+main{flex:1;padding:24px 28px;max-width:980px}
+.pane{display:none}.pane.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+h2{font-size:14px;font-weight:500;margin-bottom:12px}
+h3{font-size:13px;font-weight:500;margin-bottom:8px;color:var(--text2)}
+p,li,td{font-size:13px;color:var(--text2)}
+.muted{color:var(--text3);font-size:12px}
+.btn{border:none;background:var(--p);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit}
+.btn:disabled{background:var(--line2);color:#fff;cursor:default}
+.btn.g{background:var(--card);color:var(--text2);border:1px solid var(--line)}
+.btn.t{background:var(--t);color:#fff}
+.btn.sm{padding:5px 12px;font-size:12px}
+select,textarea,input{font-family:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text)}
+textarea{width:100%;min-height:170px;line-height:1.7;padding:12px}
+label.fl{display:block;font-size:12px;color:var(--text3);margin:10px 0 4px}
+.drop{border:2px dashed var(--line2);border-radius:12px;padding:26px;text-align:center;background:var(--card);cursor:pointer;font-size:13px;color:var(--text2)}
+.drop:hover{border-color:var(--p)}
+.thumb{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.thumb div{border:1px solid var(--line);border-radius:8px;overflow:hidden;width:110px}
+.thumb img{width:100%;display:block;height:70px;object-fit:cover}
+.thumb span{display:block;font-size:11px;color:var(--text3);padding:3px 6px;word-break:break-all}
+.row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.tag{font-size:11px;padding:1px 7px;border-radius:5px;border:1px solid var(--line2);color:var(--text2)}
+.tag.p{background:var(--p-bg);border-color:var(--p-line);color:var(--p)}
+.tag.t{background:var(--t-bg);border-color:var(--t-line);color:var(--t)}
+.tag.a{background:var(--a-bg);border-color:var(--a-line);color:var(--a)}
+.tag.r{background:var(--r-bg);border-color:var(--r-line);color:var(--r)}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.item.teacher{background:#faf9f6;border-style:dashed}
+.item.dim{opacity:.5}
+.meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.who{font-weight:500}
+.quote{font-size:13px;background:#faf9f6;border-left:2px solid var(--line2);padding:6px 10px;border-radius:0 6px 6px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--text3);font-weight:400;font-size:12px}
+.grid2{display:grid;grid-template-columns:240px 1fr;gap:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.clist .item{cursor:pointer}
+.clist .item:hover{border-color:var(--p-line)}
+.crumb{font-size:12px;color:var(--text3);margin-bottom:12px}
+.crumb b{color:var(--p);cursor:pointer}
+.warn{background:var(--r-bg);border:1px solid var(--r-line);border-radius:10px;padding:14px 16px;font-size:13px}
+.warn b{color:var(--r)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;background:var(--p);width:0;transition:width .25s}
+.empty{padding:30px;text-align:center;color:var(--text3);font-size:13px;border:1px dashed var(--line2);border-radius:10px}
+</style>
+</head>
+<body>
+
+<!-- 登录 -->
+<div id="loginView">
+  <div class="login-card">
+    <img src="logo.png" alt="开窍鸦思辨">
+    <h1>档案智能体</h1>
+    <p>教师独立档案库 · 原型 v0.2</p>
+    <input type="text" id="lu" placeholder="用户名" autocomplete="off">
+    <input type="password" id="lp" placeholder="密码">
+    <div class="err" id="lerr"></div>
+    <button class="btn" style="width:100%" onclick="doLogin()">登录</button>
+    <div class="demo-hint">演示账号：teacher / 1234</div>
+  </div>
+</div>
+
+<!-- 公告 -->
+<div id="notice" class="hidden">
+  <div class="notice-card">
+    <h2>使用前请知悉</h2>
+    <div class="sub">规则与边界 · 每次登录都会显示</div>
+    <ul>
+      <li>这个工具只在<b>课后</b>使用，不会出现在课堂上。</li>
+      <li>它只做记录和整理：<b>不评对错、不给标准答案、不评价孩子的立场</b>。</li>
+      <li>孩子没发言<b>不会</b>被记成能力低；看不清的发言会标灰，不会被打低分。</li>
+      <li>孩子只说「两边都有道理」而没给出具体判断，<b>不会</b>被记为进步，会标为「待引导」。</li>
+      <li>系统不做孩子之间的排名比较。</li>
+      <li>发给家长的所有内容，必须由你<b>亲自审阅、修改并签发</b>后才会发出。</li>
+      <li>档案随学年逐年整理保存。</li>
+    </ul>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="closeNotice()">我已了解</button>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div id="app" class="hidden">
+  <aside>
+    <div class="brand">
+      <img src="logo.png" alt="">
+      <div><b>开窍鸦思辨</b><span>档案智能体 v0.2</span></div>
+    </div>
+    <div class="user" id="userChip"></div>
+    <button class="nav on" data-t="p_upload">板书上传</button>
+    <button class="nav" data-t="p_archive">学员档案</button>
+    <button class="nav" data-t="p_month">月度归档</button>
+    <button class="nav" data-t="p_report">家长反馈</button>
+    <button class="nav" data-t="p_course">课程档案</button>
+    <div class="bottom"><button class="nav" onclick="doLogout()">退出登录</button></div>
+  </aside>
+  <main>
+    <div class="pane on" id="p_upload"></div>
+    <div class="pane" id="p_archive"></div>
+    <div class="pane" id="p_month"></div>
+    <div class="pane" id="p_report"></div>
+    <div class="pane" id="p_course"></div>
+  </main>
+</div>
+
+<script>
+var DIMS=["D1 立场与开放","D2 分析与推导","D3 标准自觉","D4 例证能力","D5 收束与决断","D6 互动回应","D7 概念迁移","D8 问题生成"];
+var LVLS=["L1","L2","L3","L4","L5","L6","L7","L8"];
+
+/* ============ 课程档案（演示数据，待你补齐 384 节） ============ */
+var COURSE_ARCHIVE=[
+ {grade:"三年级",units:[
+  {unit:"认识世界",lessons:[{name:"《小P要不要吃掉》",goal:"面对承诺与情感的冲突，学习引入区分因素（短期/长期）做判断",desc:"以宠物情境讨论诺言、情感与现实约束的权衡"}]},
+  {unit:"阅读单元",lessons:[]}]},
+ {grade:"五年级",units:[
+  {unit:"情绪与自我管理",lessons:[{name:"《减肥训练营存废》",goal:"从个案推导一般原则，区分「个例」与「整体」",desc:"围绕失败案例讨论一个团队服务是否值得存续"}]},
+  {unit:"科技伦理与未来",lessons:[{name:"《完美人类计划》",goal:"学习给标准加前提，用限定条件收束判断",desc:"从设计「最好的人类」到讨论追求完美的边界"}]}]},
+ {grade:"八年级",units:[
+  {unit:"科技伦理与未来",lessons:[{name:"《人 / 兽 / 非兽》",goal:"区分结果论与动机论，检验论证的前提",desc:"从定义「人」到讨论极端手段与目的的关系"}]},
+  {unit:"人性与偏见",lessons:[{name:"《画师与国王》",goal:"讨论真实与权力的冲突，练习在压力下做判断",desc:"画师因画真实被处死——说真话的代价"}]},
+  {unit:"道德与法律",lessons:[{name:"《一人一票与多数暴政》",goal:"检验「多数决定」的前提，讨论如何保护少数派",desc:"从投票权到多数人的暴政"}]}]}
+];
+
+/* ============ 板书识别结果（来自两轮实测的真实内容） ============ */
+var ENTRIES={
+ "《小P要不要吃掉》":[
+  {who:"教师",tag:"引导语·排除",stage:"",dim:0,text:"如果你不管这个动物是否愿意成为你的宠物，而单方面去对它好、照顾它、喜欢它，那这样的情况下，它算你的宠物吗？"},
+  {who:"韩韬",tag:"",stage:"框架前",dim:0,text:"只要你喜欢这个动物，并且这个动物不会伤害到人，就可以养它。"},
+  {who:"韩韬",tag:"",stage:"框架前",dim:0,text:"我觉得应该要吃掉小P。因为一开始许下承诺了，最后我要遵守誓言……第二，猪也是会老死掉的，总不能一直养着吧。"},
+  {who:"朵果",tag:"",stage:"框架前",dim:0,text:"但是我觉得他们之间从小P一出生就有很多友情和感情……吃了它真的是一件很爽的事情吗？"},
+  {who:"诗诗",tag:"",stage:"框架前",dim:0,text:"我们和小P的感情很深厚。但是我采访一下：当我们毕业以后，小P该由谁继续饲养？去了不同的学校，还能够继续养它吗？"},
+  {who:"诗诗",tag:"",stage:"框架前",dim:0,text:"我觉得不应该杀。首先随意杀死一个自己养大的生命呢？它不是你的朋友吗？"},
+  {who:"依依",tag:"置信度低·标灰",stage:"框架前",dim:1,text:"（转写语序混乱，无法还原原意，已置灰，可补录）"}
+ ],
+ "《完美人类计划》":[
+  {who:"教师",tag:"卡片·框架",stage:"",dim:0,text:"◆从身体、性格、能力三个维度，共同完成「最好的人类」设计图纸。"},
+  {who:"灵宝",tag:"",stage:"框架前",dim:0,text:"我认为配合和服从能力也很重要，这并非是低人一等，而是在团队当中必须要具备的一种必要能力。"},
+  {who:"灵宝",tag:"骑墙·待引导",stage:"框架后",dim:0,text:"我觉得我还是既同意也不同意……要看情况。"},
+  {who:"灵宝",tag:"",stage:"框架后",dim:0,text:"做一件力所能及的事情，我们就应该去追求完美；对于没有把握的事情，接受平庸，不要因为过度追求完美而影响发挥。"},
+  {who:"灵宝",tag:"",stage:"框架后",dim:0,text:"时间有限的情况下，我的卷子没有做完，这时追求完美去复查，反而会让最后的结果不好，所以无需过度追求完美。"}
+ ],
+ "《人 / 兽 / 非兽》":[
+  {who:"教师",tag:"卡片·框架",stage:"",dim:0,text:"结果论（边沁·密尔）vs 动机论（康德）"},
+  {who:"小P",tag:"框架后·只观察",stage:"框架后",dim:0,text:"灭世的行为试图通过极端手段来实现平等，平等的前提是建立在理想化、公正的制度之上。但现实中这种制度带来的后果是什么，以及这个后果是否可以接受？"},
+  {who:"小P",tag:"",stage:"框架前",dim:0,text:"既然出现了高度的组织化和明确分工，这是文明进步的表现，但不能因为这个原因就认为它们的存在是合理的。"},
+  {who:"朵果",tag:"置信度低·标灰",stage:"框架后",dim:1,text:"（长图压缩＋口语转写，语序混乱，已置灰）"}
+ ],
+ "《减肥训练营存废》":[
+  {who:"嘟嘟",tag:"",stage:"框架前",dim:0,text:"我觉得有必要让小巴吃点儿零食来庆祝一下……这顿是高热量，但是很小的事情，他的减肥大业在以后的日子里可以继续完成。"},
+  {who:"嘟嘟",tag:"",stage:"框架前",dim:0,text:"拿学习来说，如果你放弃学习可能会被爸妈狂揍（有后果，害怕后果），还可能会被同学嘲笑。还有学习上带来的成就感会更大一些。"},
+  {who:"涵涵",tag:"",stage:"框架前",dim:0,text:"我认为还是有必要的，小巴也只是一个例子，这并非代表我们并不靠谱。况且经过小巴这个失败案例，我们也有了更多经验去针对其他人。"},
+  {who:"涵涵",tag:"",stage:"框架前",dim:0,text:"我们在完成一件事情的时候，更应该把重心放在完成的效果和做这个事情的执行力上。"},
+  {who:"嘟嘟",tag:"",stage:"框架前",dim:0,text:"我的想法和大家不一样，我觉得没有必要开下去……与其接受失败，不如在更擅长的事情上去面对更多的成功。"}
+ ],
+ "《画师与国王》":[
+  {who:"教师",tag:"选项卡·框架",stage:"",dim:0,text:"假如你是画师：A 画得真实 B 美化国王 C 逃走"},
+  {who:"依依",tag:"置信度低·标灰",stage:"框架前",dim:1,text:"我觉得这个问题很麻烦，因为（怎么说）都处于一个折中的状态……（后续无法还原，已置灰，可补录）"},
+  {who:"君陌",tag:"",stage:"框架后",dim:0,text:"（识别置信度中，仅供预览）"}
+ ]
+};
+
+var SPEAKERS={
+ "《小P要不要吃掉》":["韩韬","朵果","诗诗","依依"],
+ "《完美人类计划》":["灵宝"],
+ "《人 / 兽 / 非兽》":["小P","朵果"],
+ "《减肥训练营存废》":["嘟嘟","涵涵","若溪","Henry"],
+ "《画师与国王》":["Jasper","君陌","依依","子衿"],
+ "《一人一票与多数暴政》":["依依","天淇"]
+};
+
+/* ============ 学生归档记录（来自实测） ============ */
+var REC={
+ "嘟嘟":{lv:"L5",recs:[
+  {d:"D5 收束与决断",m:"高于",q:"我的想法和大家不一样，我觉得没有必要开下去……与其接受失败，不如在更擅长的事情上去面对更多的成功。",t:["决断·引入痛苦成本与机会成本"]},
+  {d:"D1 立场与开放",m:"高于",q:"我的想法和大家不一样……",t:["主动持异见"]},
+  {d:"D2 分析与推导",m:"高于",q:"像小巴这样的人绝对不是个例。",t:["由个例到一般"]},
+  {d:"D7 概念迁移",m:"高于",q:"拿学习来说，如果你放弃学习可能会被爸妈狂揍（有后果，害怕后果），还可能会被同学嘲笑。",t:["跨领域迁移 L6"]},
+  {d:"D5 收束与决断",m:"高于",q:"有必要让小巴吃点儿零食庆祝……减肥大业以后可以继续完成。",t:["引入短期/长期"]},
+  {d:"D8 问题生成",m:"置灰",q:"—",t:["材料不足"]}]},
+ "涵涵":{lv:"L5",recs:[
+  {d:"D5 收束与决断",m:"高于",q:"小巴也只是一个例子，这并非代表我们并不靠谱。",t:["决断·引入个例/整体"]},
+  {d:"D2 分析与推导",m:"高于",q:"经过小巴这个失败案例，我们也有了更多经验。",t:["失败→经验"]},
+  {d:"D7 概念迁移",m:"高于",q:"完成一件事，更应该把重心放在完成的效果和执行力上。",t:["抽象出一般原则 L7"]},
+  {d:"D8 问题生成",m:"置灰",q:"—",t:["材料不足"]}]},
+ "灵宝":{lv:"L6",recs:[
+  {d:"D1 立场与开放",m:"符合",q:"我既同意也不同意……要看情况。",t:["骑墙·待引导","未引入区分因素"]},
+  {d:"D5 收束与决断",m:"低于",q:"同上",t:["骑墙·待引导"]},
+  {d:"D3 标准自觉",m:"高于",q:"配合和服从能力也很重要，这并非是低人一等，而是团队中必须具备的必要能力。",t:["说明为何选此标准 L6"]},
+  {d:"D3 标准自觉",m:"高于",q:"做力所能及的事追求完美；超出能力范围则接受平庸。",t:["承认标准的失效条件 L7"]},
+  {d:"D5 收束与决断",m:"高于",q:"时间有限时去复查反而让结果不好，所以无需过度追求完美。",t:["引入时间因素·天平倾斜"]},
+  {d:"D6 互动回应",m:"置灰",q:"—",t:["材料不足·本课无对手"]},
+  {d:"D8 问题生成",m:"置灰",q:"—",t:["材料不足"]}]},
+ "诗诗":{lv:"L4",recs:[
+  {d:"D8 问题生成",m:"高于",q:"当我们毕业以后，小P该由谁继续饲养？去了不同的学校，还能够继续养它吗？",t:["指向方案可行性漏洞 L6"]},
+  {d:"D1 立场与开放",m:"高于",q:"我们和小P的感情很深厚（承认对方立场）……但是我采访一下（转向）",t:[]},
+  {d:"D2 分析与推导",m:"高于",q:"把决策拆成「现在」与「毕业后」两个时间段的后果",t:["短期/长期"]},
+  {d:"D5 收束与决断",m:"符合",q:"让小P自己寻找、决定它的生死。",t:["给出替代方案但未说明理由"]}]},
+ "韩韬":{lv:"L4",recs:[
+  {d:"D4 例证能力",m:"低于",q:"吃了它就是一种很爽的事情。",t:["弱例证·待引导","以欲望替代理由"]},
+  {d:"D5 收束与决断",m:"高于",q:"我觉得应该要吃掉小P，因为一开始许下承诺了……",t:["结论与理由一致"]},
+  {d:"D3 标准自觉",m:"符合",q:"标准＝承诺，但未解释为何承诺高于感情",t:[]},
+  {d:"D7 概念迁移",m:"符合",q:"把「猪会老死」的现实约束迁移到小P身上",t:[]}]},
+ "小P":{lv:"L6",recs:[
+  {d:"D2 分析与推导",m:"高于",q:"平等的前提是建立在理想化、公正的制度之上。但这个后果是否可以接受？",t:["识别自身论证漏洞 L7","框架后·只观察不升级"]},
+  {d:"D5 收束与决断",m:"高于",q:"取决于后果是否可接受——带限定条件的结论",t:[]},
+  {d:"D6 互动回应",m:"置灰",q:"—",t:["材料不足"]}]},
+ "若溪":{lv:"L5",recs:[
+  {d:"D2 分析与推导",m:"高于",q:"小巴说自己每晚都是饿晕过去的，这已经反映了他可能坚持不下去了。",t:["从材料提取证据"]}]},
+ "Henry":{lv:"L5",recs:[
+  {d:"D1 立场与开放",m:"符合",q:"我也觉得有必要嘛……",t:["跟随并补充"]}]},
+ "朵果":{lv:"L4",recs:[
+  {d:"D6 互动回应",m:"高于",q:"但是我觉得他们之间从小P一出生就有很多友情和感情……",t:["直接回应对方"]},
+  {d:"D2 分析与推导",m:"符合",q:"理由停留在友情与感情，未形成可复用标准",t:[]}]},
+ "依依":{lv:"L4",recs:[
+  {d:"D5 收束与决断",m:"置灰",q:"……处于一个折中的状态……",t:["置信度低·待补录","模糊句不得判骑墙"]}]},
+ "Jasper":{lv:"L5",recs:[{d:"D8 问题生成",m:"置灰",q:"—",t:["材料不足"]}]},
+ "君陌":{lv:"L5",recs:[{d:"D8 问题生成",m:"置灰",q:"—",t:["材料不足"]}]},
+ "子衿":{lv:"L4",recs:[{d:"D8 问题生成",m:"置灰",q:"—",t:["材料不足"]}]},
+ "天淇":{lv:"L5",recs:[{d:"D8 问题生成",m:"置灰",q:"—",t:["材料不足"]}]}
+};
+var RADAR={"嘟嘟":[4,4,3,3,5,4,5,0],"涵涵":[4,5,3,3,5,3,5,0],"灵宝":[4,5,6,5,5,0,4,0],"诗诗":[5,4,3,3,4,3,3,6],"韩韬":[3,4,4,2,5,3,4,3],"小P":[4,6,5,4,5,0,5,5]};
+
+/* ============ 数据存储（演示：本机 localStorage） ============ */
+var KEY="kq_archive_v02";
+var DB=load();
+function load(){
+ try{var d=JSON.parse(localStorage.getItem(KEY));if(d)return d}catch(e){}
+ return {classes:[
+  {id:"c1",name:"周三19:30班",grade:"五年级",students:["嘟嘟","涵涵","若溪","Henry"]},
+  {id:"c2",name:"周五19:00班",grade:"三年级",students:["诗诗","韩韬","朵果","依依"]},
+  {id:"c3",name:"周六上午班",grade:"八年级",students:["灵宝","小P","Jasper","君陌","子衿"]}
+ ],sessions:[
+  {id:"s1",classId:"c2",date:"2026-07-24",course:"《小P要不要吃掉》"},
+  {id:"s2",classId:"c1",date:"2026-09-12",course:"《减肥训练营存废》"},
+  {id:"s3",classId:"c3",date:"2026-09-30",course:"《完美人类计划》"},
+  {id:"s4",classId:"c3",date:"2026-10-09",course:"《人 / 兽 / 非兽》"},
+  {id:"s5",classId:"c3",date:"2026-10-16",course:"《画师与国王》"}
+ ]};
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(DB))}
+
+var user=null,curClass=null,curStudent=null,curSession=null;
+
+/* ============ 登录 ============ */
+function doLogin(){
+ var u=document.getElementById("lu").value.trim(),p=document.getElementById("lp").value;
+ if(u==="teacher"&&p==="1234"){user=u;start()}else{document.getElementById("lerr").textContent="用户名或密码不正确（演示账号：teacher / 1234）"}
+}
+function doLogout(){location.reload()}
+function start(){
+ document.getElementById("loginView").classList.add("hidden");
+ document.getElementById("app").classList.remove("hidden");
+ document.getElementById("userChip").textContent="你好，"+user+" 老师";
+ document.getElementById("notice").classList.remove("hidden");
+ buildAll();
+}
+function closeNotice(){document.getElementById("notice").classList.add("hidden")}
+
+/* ============ 导航 ============ */
+document.querySelectorAll("aside button.nav[data-t]").forEach(function(b){
+ b.onclick=function(){go(b.dataset.t)};
+});
+function go(t){
+ document.querySelectorAll("aside button.nav[data-t]").forEach(function(b){b.classList.toggle("on",b.dataset.t===t)});
+ document.querySelectorAll(".pane").forEach(function(p){p.classList.remove("on")});
+ document.getElementById(t).classList.add("on");
+ if(t==="p_archive")renderArchive();
+ if(t==="p_month")renderMonth();
+ if(t==="p_report")renderReport();
+ if(t==="p_course")renderCourse();
+}
+
+/* ============ 工具 ============ */
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!==undefined)e.innerHTML=html;return e}
+function clsOf(id){return DB.classes.filter(function(c){return c.id===id})[0]}
+function sessionsOf(name){return DB.sessions.filter(function(s){var c=clsOf(s.classId);return c&&c.students.indexOf(name)>-1})}
+
+/* ============ 1 板书上传 ============ */
+function buildUpload(){
+ var p=document.getElementById("p_upload");p.innerHTML="";
+ var c1=el("div","card",'<h2>上传板书</h2>');
+ var f=el("div");
+ f.innerHTML=
+  '<label class="fl">班级</label><select id="up_cls"></select>'+
+  '<label class="fl">日期</label><input type="date" id="up_date">'+
+  '<label class="fl">课程（年级 → 单元 → 课节）</label><div class="row"><select id="up_grade"></select><select id="up_unit"></select><select id="up_lesson"></select></div>';
+ c1.appendChild(f);
+ var g=document.createElement("div");
+ g.innerHTML='<label class="fl">板书长图（可多段上传，系统自动合并）</label>';
+ var drop=el("div","drop","点击或拖入板书长图 · 支持一次选多张");
+ var inp=el("input");inp.type="file";inp.multiple=true;inp.accept="image/*";inp.style.display="none";
+ var th=el("div","thumb");g.appendChild(drop);g.appendChild(inp);g.appendChild(th);
+ var row=el("div","row");row.style.marginTop="14px";
+ var run=el("button","btn","开始识别与切分");run.disabled=true;
+ row.appendChild(run);g.appendChild(row);
+ var bar=el("div","bar");bar.innerHTML="<i></i>";g.appendChild(bar);
+ var st=el("p","muted");g.appendChild(st);
+ c1.appendChild(g);p.appendChild(c1);
+
+ var cs=document.getElementById("up_cls");
+ DB.classes.forEach(function(c){var o=el("option","",c.name+"（"+c.grade+"）");o.value=c.id;cs.appendChild(o)});
+ var d=document.getElementById("up_date");d.value=new Date().toISOString().slice(0,10);
+ var gr=document.getElementById("up_grade"),un=document.getElementById("up_unit"),le=document.getElementById("up_lesson");
+ COURSE_ARCHIVE.forEach(function(g0){var o=el("option","",g0.grade);gr.appendChild(o)});
+ function units(){un.innerHTML="";var g0=COURSE_ARCHIVE[gr.selectedIndex];g0.units.forEach(function(u){var o=el("option","",u.unit);un.appendChild(o)});lessons()}
+ function lessons(){le.innerHTML="";var u=COURSE_ARCHIVE[gr.selectedIndex].units[un.selectedIndex];if(u.lessons.length===0){le.appendChild(el("option","","（该单元课节待录入）"))}else{u.lessons.forEach(function(l){le.appendChild(el("option","",l.name))})}}
+ gr.onchange=units;un.onchange=lessons;units();
+
+ drop.onclick=function(){inp.click()};
+ drop.ondragover=function(e){e.preventDefault()};
+ drop.ondrop=function(e){e.preventDefault();handle(e.dataTransfer.files)};
+ inp.onchange=function(){handle(inp.files)};
+ function handle(fs){
+  for(var i=0;i<fs.length;i++){(function(f0){
+   var r=new FileReader();
+   r.onload=function(){var d0=el("div");d0.innerHTML='<img src="'+r.result+'"><span>'+f0.name+'</span>';th.appendChild(d0)};
+   r.readAsDataURL(f0);
+  })(fs[i])}
+  run.disabled=false;st.textContent="已选 "+fs.length+" 张。";
+ }
+ run.onclick=function(){
+  run.disabled=true;var v=0,prog=bar.firstChild;
+  var t=setInterval(function(){v+=10;prog.style.width=Math.min(v,100)+"%";
+   if(v>=100){clearInterval(t);showDetected(st)}} ,110);
+ };
+ function showDetected(stEl){
+  var lesson=le.value,cid=cs.value,cls=clsOf(cid);
+  var sp=SPEAKERS[lesson]||[];
+  var matched=sp.filter(function(n){return cls.students.indexOf(n)>-1});
+  var unmatched=sp.filter(function(n){return cls.students.indexOf(n)<0});
+  stEl.innerHTML="识别出的学员：<b style='color:var(--text)'>"+(sp.join("、")||"—")+"</b> ｜ 与「"+cls.name+"」花名册匹配 "+matched.length+"/"+sp.length;
+  var c2=el("div","card",'<h2>识别结果确认</h2>');
+  c2.appendChild(el("p","",'课程：<b>'+lesson+'</b> · 日期：'+d.value+" · 班级："+cls.name));
+  if(unmatched.length){
+   var w=el("p","",'<span class="tag a">未匹配</span> '+unmatched.join("、")+" —— 板书上的名字与花名册不一致，请确认是否为昵称或新学生");
+   c2.appendChild(w);
+  }else{
+   c2.appendChild(el("p","muted","全部学员已自动匹配花名册，无需手动勾选。"));
+  }
+  var save=el("button","btn t","确认并存入学员档案");save.style.marginTop="10px";
+  save.onclick=function(){
+   DB.sessions.push({id:"s"+Date.now(),classId:cid,date:d.value,course:lesson});
+   unmatched.forEach(function(n){cls.students.push(n)});
+   save();curClass=cid;renderArchive();
+   c2.querySelector("h2").innerHTML="已存入学员档案 <span class='tag t'>完成</span>";
+   save.remove();
+  };
+  c2.appendChild(save);
+  p.appendChild(c2);
+ }
+ var c3=el("div","card",
+  '<h2>识别会自动做的五件事</h2><div class="list">'+
+  ["按姓名切分说话人；<b>无姓名前缀的独立观点一律归教师</b>","按课件卡片、选项卡、理论工具的位置标记「框架前 / 框架后」","红字拆分：案情与材料保留，评语与纠偏排除","置信度低的句子标灰，不打分、可补录","学员名自动与班级花名册匹配，未匹配的提示确认或新建"].map(function(x,i){return '<div class="item"><span class="tag p">'+(i+1)+'</span> '+x+'</div>'}).join("")+'</div>');
+ p.appendChild(c3);
+}
+
+/* ============ 2 学员档案 ============ */
+function renderArchive(){
+ var p=document.getElementById("p_archive");p.innerHTML="";
+ p.appendChild(el("div","crumb",'<b onclick="archClass(null)">学员档案</b>'+(curClass?' / <b onclick="archClass(\''+curClass+'\')">'+clsOf(curClass).name+'</b>':'')+(curStudent?' / '+curStudent:'')+(curSession?' / '+curSession.date:'')));
+ if(!curClass)renderClassList(p);
+ else if(!curStudent)renderStudentList(p);
+ else if(!curSession)renderSessionList(p);
+ else renderSessionDetail(p);
+}
+function archClass(id){curClass=id;curStudent=null;curSession=null;renderArchive()}
+function archStudent(n){curStudent=n;curSession=null;renderArchive()}
+function archSession(id){curSession=id;renderArchive()}
+
+function renderClassList(p){
+ var head=el("div","card",'<h2>班级</h2>');
+ var box=el("div","list clist");
+ DB.classes.forEach(function(c){
+  var it=el("div","item",'<div class="meta"><span class="who">'+c.name+'</span><span class="tag">'+c.grade+'</span><span class="tag p">'+c.students.length+' 名学员</span></div>');
+  it.onclick=function(){archClass(c.id)};
+  box.appendChild(it);
+ });
+ head.appendChild(box);
+ var f=el("div","row");f.style.marginTop="12px";
+ var inp=el("input");inp.placeholder="新班级名（如：周一20:00班）";
+ var gs=el("select");["二年级","三年级","四年级","五年级","六年级","七年级","八年级","九年级"].forEach(function(g){gs.appendChild(el("option","",g))});
+ var btn=el("button","btn sm","建班");
+ btn.onclick=function(){var n=inp.value.trim();if(!n)return;
+  DB.classes.push({id:"c"+Date.now(),name:n,grade:gs.value,students:[]});save();renderArchive()};
+ f.appendChild(inp);f.appendChild(gs);f.appendChild(btn);head.appendChild(f);
+ p.appendChild(head);
+}
+function renderStudentList(p){
+ var c=clsOf(curClass);
+ var head=el("div","card",'<h2>'+c.name+' · 学员</h2>');
+ var box=el("div","list clist");
+ c.students.forEach(function(n){
+  var r=REC[n]||{lv:"L1"};
+  var cnt=sessionsOf(n).length;
+  var it=el("div","item",'<div class="meta"><span class="who">'+n+'</span><span class="tag p">'+r.lv+'</span><span class="tag">'+cnt+' 节课记录</span></div>');
+  it.onclick=function(){archStudent(n)};
+  box.appendChild(it);
+ });
+ head.appendChild(box);
+ var f=el("div","row");f.style.marginTop="12px";
+ var inp=el("input");inp.placeholder="新学员姓名";
+ var btn=el("button","btn sm","新建学生");
+ btn.onclick=function(){var n=inp.value.trim();if(!n||c.students.indexOf(n)>-1)return;
+  c.students.push(n);save();renderArchive()};
+ f.appendChild(inp);f.appendChild(btn);head.appendChild(f);
+ p.appendChild(head);
+}
+function renderSessionList(p){
+ var r=REC[curStudent]||{lv:"L1",recs:[]};
+ var head=el("div","card",'<h2>'+curStudent+' <span class="tag p">'+r.lv+'</span></h2>');
+ var ss=sessionsOf(curStudent).sort(function(a,b){return b.date<a.date?-1:1});
+ var box=el("div","list clist");
+ if(ss.length===0)box.appendChild(el("div","empty","还没有课堂记录"));
+ ss.forEach(function(s){
+  var it=el("div","item",'<div class="meta"><span class="who">'+s.date+'</span><span class="tag p">'+s.course+'</span></div>');
+  it.onclick=function(){archSession(s)};
+  box.appendChild(it);
+ });
+ head.appendChild(box);
+ var f=el("div","row");f.style.marginTop="12px";
+ var sc=el("select");["月报","季报","年报"].forEach(function(x){sc.appendChild(el("option","",x))});
+ var btn=el("button","btn sm","一键生成");
+ btn.onclick=function(){genReport(curStudent,sc.value)};
+ f.appendChild(sc);f.appendChild(btn);head.appendChild(f);
+ p.appendChild(head);
+}
+function renderSessionDetail(p){
+ var s=curSession;
+ var card=el("div","card",'<h2>'+s.date+' · '+s.course+'</h2>');
+ var es=ENTRIES[s.course]||[{who:"教师",tag:"",stage:"",dim:0,text:"（本节课为演示新建，板书内容待接入识别后自动填充）"}];
+ var box=el("div","list");
+ es.forEach(function(x){
+  var cls="item"+(x.who==="教师"?" teacher":"")+(x.dim?" dim":"");
+  box.appendChild(el("div",cls,'<div class="meta"><span class="who">'+x.who+'</span>'+
+   (x.tag?'<span class="tag '+(x.dim?"a":(x.who==="教师"?"":"p"))+'">'+x.tag+'</span>':"")+
+   (x.stage?'<span class="tag t">'+x.stage+'</span>':"")+'</div><div class="quote">'+x.text+'</div>'));
+ });
+ card.appendChild(box);
+ p.appendChild(card);
+ renderStudentRecords(p,curStudent);
+}
+function renderStudentRecords(p,name){
+ var r=REC[name];
+ if(!r){p.appendChild(el("div","card","<h2>归档记录</h2>"));return}
+ var card=el("div","card",'<h2>归档记录（本节课）</h2>');
+ var box=el("div","list");
+ r.recs.forEach(function(x){
+  var tc=x.m==="高于"?"t":(x.m==="低于"?"r":"");
+  box.appendChild(el("div","item"+(x.m==="置灰"?" dim":""),'<div class="meta"><span class="who">'+x.d+'</span>'+
+   '<span class="tag '+tc+'">'+x.m+'</span>'+x.t.map(function(t){return '<span class="tag a">'+t+'</span>'}).join("")+'</div><div class="quote">'+x.q+'</div>'));
+ });
+ card.appendChild(box);
+ p.appendChild(card);
+}
+
+/* ============ 3 月度归档 ============ */
+function renderMonth(){
+ var p=document.getElementById("p_month");p.innerHTML="";
+ var c=el("div","card",'<h2>月度归档</h2><p class="muted">先选择班级与学员，点「生成」后才会出八维变化图与 Level 建议。</p>');
+ var f=el("div","row");f.style.marginTop="12px";
+ var cs=el("select"),ss=el("select"),mo=el("input");mo.type="month";mo.value=new Date().toISOString().slice(0,7);
+ DB.classes.forEach(function(x){var o=el("option","",x.name);o.value=x.id;cs.appendChild(o)});
+ function fill(){ss.innerHTML="";clsOf(cs.value).students.forEach(function(n){ss.appendChild(el("option","",n))})}
+ cs.onchange=fill;fill();
+ var btn=el("button","btn","生成");
+ var out=el("div");out.id="mout";
+ btn.onclick=function(){
+  var name=ss.value,rec=REC[name];
+  if(!rec){out.innerHTML='<div class="empty" style="margin-top:14px">该学员暂无数据</div>';return}
+  out.innerHTML='<div class="card" style="margin-top:14px"><h2>'+name+" · "+mo.value+'</h2>'+
+   '<div class="row"><div style="flex:1;min-width:280px"><h3>本月 vs 上月（八维）</h3><div id="radar"></div><p class="muted">实线为本月，虚线为上月。给家长展示变化，不展示绝对值。</p></div>'+
+   '<div style="width:300px"><h3>Level 归档</h3><p class="muted">系统建议 '+rec.lv+'（由三档换算，可改）</p><h3 style="margin-top:10px">调整 Level</h3><select id="lvsel">'+LVLS.map(function(l){return '<option'+(l===rec.lv?" selected":"")+'>'+l+'</option>'}).join("")+'</select>'+
+   '<p class="muted" style="margin-top:10px">Level 可升可降；下降只记在教师侧。</p><button class="btn" style="margin-top:10px" onclick="alert(\'已保存本月归档（原型：未接入后端）\')">保存本月归档</button></div></div></div>';
+  radar(name);
+ };
+ f.appendChild(cs);f.appendChild(ss);f.appendChild(mo);f.appendChild(btn);
+ c.appendChild(f);p.appendChild(c);p.appendChild(out);
+}
+function radar(name){
+ var base=RADAR[name]||[3,3,3,3,3,3,3,3];
+ var now=base.map(function(v,i){return i===4?Math.min(8,v+1):v});
+ var prev=base.map(function(v){return Math.max(1,v-1)});
+ var n=8,cx=160,cy=150,R=100;
+ function pts(arr){return arr.map(function(v,i){var a=-Math.PI/2+i*2*Math.PI/n,r=R*v/8;
+  return (cx+r*Math.cos(a)).toFixed(1)+","+(cy+r*Math.sin(a)).toFixed(1)}).join(" ")}
+ var axes="";
+ for(var i=0;i<n;i++){var a=-Math.PI/2+i*2*Math.PI/n;
+  axes+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+R*Math.cos(a)).toFixed(1)+'" y2="'+(cy+R*Math.sin(a)).toFixed(1)+'" stroke="#e6e4de"/>';
+  axes+='<text x="'+(cx+(R+15)*Math.cos(a)).toFixed(1)+'" y="'+(cy+(R+15)*Math.sin(a)).toFixed(1)+'" font-size="10" fill="#888780" text-anchor="middle">D'+(i+1)+'</text>';}
+ for(var k=2;k<=8;k+=2){var rr=R*k/8,poly=[];for(var j=0;j<n;j++){var a2=-Math.PI/2+j*2*Math.PI/n;poly.push((cx+rr*Math.cos(a2)).toFixed(1)+","+(cy+rr*Math.sin(a2)).toFixed(1))}
+  axes+='<polygon points="'+poly.join(" ")+'" fill="none" stroke="#eee"/>';}
+ document.getElementById("radar").innerHTML='<svg viewBox="0 0 320 300" width="100%">'+axes+
+  '<polygon points="'+pts(prev)+'" fill="none" stroke="#b4b2a9" stroke-dasharray="4 3"/>'+
+  '<polygon points="'+pts(now)+'" fill="rgba(83,74,183,.15)" stroke="#534ab7"/></svg>';
+}
+
+/* ============ 4 家长反馈 ============ */
+function renderReport(){
+ var p=document.getElementById("p_report");p.innerHTML="";
+ var c=el("div","card",'<h2>家长反馈草稿</h2>');
+ var f=el("div","row");
+ var ss=el("select"),pr=el("select");
+ var all=[];DB.classes.forEach(function(x){x.students.forEach(function(n){if(all.indexOf(n)<0)all.push(n)})});
+ all.forEach(function(n){ss.appendChild(el("option","",n))});
+ ["近一周","近一个月","近三个月"].forEach(function(x,i){var o=el("option","",x);if(i===1)o.selected=true;pr.appendChild(o)});
+ var btn=el("button","btn g","生成总结草稿");
+ btn.onclick=function(){genReport(ss.value,pr.value)};
+ f.appendChild(ss);f.appendChild(pr);f.appendChild(btn);
+ var ta=el("textarea");ta.id="draft";ta.placeholder="点击上方按钮生成草稿";
+ var f2=el("div","row");f2.style.marginTop="12px";f2.style.alignItems="center";
+ f2.innerHTML='<label style="font-size:13px;color:var(--text2);display:flex;gap:6px;align-items:center"><input type="checkbox" id="ck"> 我已审阅、修改并补充了建议</label>';
+ var send=el("button","btn","签发并导出");send.disabled=true;
+ f2.appendChild(send);f2.appendChild(el("span","muted","签发后才可发送给家长。系统不直接对家长说话。"));
+ c.appendChild(f);c.appendChild(ta);c.appendChild(f2);p.appendChild(c);
+ p.appendChild(el("div","warn",'<b>边界提醒 ·</b> 家长看到的应是「变化」，不是绝对分数。置灰维度是观察机会不足，不得写成短板。'));
+ document.getElementById("ck").onchange=function(){send.disabled=!this.checked};
+ send.onclick=function(){alert("已签发（原型：未接入后端）。签发后才会发送给家长。")};
+}
+function genReport(name,scope){
+ var r=REC[name];if(!r)return;
+ var hi=r.recs.filter(function(x){return x.m==="高于"}),lo=r.recs.filter(function(x){return x.m==="低于"});
+ var text="【"+name+" · "+scope+"课堂表现总结（草稿）】\n\n一、看得见的进步\n"+
+  (hi.length?hi.map(function(x){return "· "+x.d+"："+x.q.slice(0,60)+(x.q.length>60?"……":"")}).join("\n"):"· 本周期暂无")+
+  "\n\n二、仍需引导的地方\n"+
+  (lo.length?lo.map(function(x){return "· "+x.d+"："+x.q.slice(0,60)+"（"+(x.t[0]||"")+"）"}).join("\n"):"· 本周期无明显短板记录")+
+  "\n\n三、说明\n· 置灰维度为本周期观察机会不足，不代表能力不足。\n· 本总结为 AI 草稿，需教师补充具体建议后再发给家长。";
+ var ta=document.getElementById("draft");if(ta)ta.value=text;else alert(text);
+}
+
+/* ============ 5 课程档案 ============ */
+function renderCourse(){
+ var p=document.getElementById("p_course");p.innerHTML="";
+ var c=el("div","card",'<h2>课程内容档案</h2><p class="muted">演示数据。完整 384 节课（48 节 × 8 个年级）待录入或对接教务系统。</p>');
+ var box=el("div","list");
+ COURSE_ARCHIVE.forEach(function(g){
+  g.units.forEach(function(u){
+   u.lessons.forEach(function(l){
+    box.appendChild(el("div","item",'<div class="meta"><span class="who">'+l.name+'</span><span class="tag p">'+g.grade+'</span><span class="tag">'+u.unit+'</span></div>'+
+     '<p><b style="color:var(--text)">课程目标：</b>'+l.goal+'</p><p style="margin-top:4px"><b style="color:var(--text)">概述：</b>'+l.desc+'</p>'));
+   });
+  });
+ });
+ c.appendChild(box);p.appendChild(c);
+ p.appendChild(el("div","card",'<h2>上传板书时联动课程档案</h2><p>上传界面中的「年级 → 单元 → 课节」三级选择就来自这里。课程档案建立后，同一节课在不同班级的课堂记录可以横向对照——比如《减肥训练营存废》这节课，三班的学生卡在 D5，五班没有，这就提示该课的某个环节可能需要调整（档案反哺备课）。</p>'));
+}
+
+function buildAll(){buildUpload();renderArchive()}
+</script>
+</body>
+</html>

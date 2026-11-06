@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开窍鸦思辨 · 档案智能体 v1.1</title>
+<style>
+:root{
+  /* 暖纸 + 墨色：不用纯白纯黑，长时间看不刺眼 */
+  --bg:#FAF8F3; --card:#FFFFFF; --line:#EAE6DD; --line2:#D9D4C8;
+  --text:#23272E; --text2:#5B6068; --text3:#8E9399;
+  --p:#3E5273; --p-bg:#EEF1F7; --p-line:#C9D3E4;
+  --t:#2D7A63; --t-bg:#E6F4EE; --t-line:#A8D9C6;
+  --a:#96681B; --a-bg:#FBF2DE; --a-line:#EED0A0;
+  --r:#A34747; --r-bg:#FBECEC; --r-line:#F0C6C6;
+  --sh:0 1px 2px rgba(35,39,46,.04);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.65;
+  -webkit-font-smoothing:antialiased}
+.hidden{display:none!important}
+::selection{background:#DDE4F0}
+
+/* ---------- 登录 ---------- */
+#loginView,#pwdView{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:30}
+.cardbox{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:38px 40px;width:392px;box-shadow:0 12px 40px rgba(35,39,46,.06)}
+.cardbox img{height:46px;display:block;margin:0 auto 10px}
+.cardbox h1{font-size:16px;font-weight:600;text-align:center;margin-bottom:4px;letter-spacing:.3px}
+.cardbox p{font-size:12px;color:var(--text3);text-align:center;margin-bottom:22px}
+.cardbox input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:14px;margin-bottom:12px;font-family:inherit;background:#FCFBF8;transition:border-color .15s,background .15s}
+.cardbox input:focus{outline:none;border-color:var(--p);background:#fff}
+.cardbox .err{color:var(--r);font-size:12px;min-height:18px;margin-bottom:6px;text-align:center}
+.demo-hint{font-size:11.5px;color:var(--text3);text-align:center;margin-top:12px;line-height:1.8}
+
+/* ---------- 弹层 ---------- */
+#notice,#pwdModal{position:fixed;inset:0;background:rgba(28,32,38,.4);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:40;padding:20px}
+.notice-card{background:var(--card);border-radius:18px;padding:28px 32px;width:500px;max-height:82vh;overflow:auto;box-shadow:0 20px 60px rgba(28,32,38,.18)}
+.notice-card h2{font-size:16px;font-weight:600;margin-bottom:4px}
+.notice-card .sub{font-size:12px;color:var(--text3);margin-bottom:18px}
+.notice-card li{font-size:13px;color:var(--text2);margin-bottom:11px;list-style:none;padding-left:20px;position:relative;line-height:1.7}
+.notice-card li:before{content:"";position:absolute;left:4px;top:9px;width:5px;height:5px;border-radius:50%;background:var(--p-line)}
+
+/* ---------- 框架 ---------- */
+#app{display:flex;min-height:100vh}
+aside{width:214px;flex:0 0 214px;background:var(--card);border-right:1px solid var(--line);
+  padding:18px 12px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:auto}
+aside .brand{display:flex;align-items:center;gap:10px;padding:2px 8px 14px;border-bottom:1px solid var(--line);margin-bottom:12px}
+aside .brand img{height:30px;border-radius:6px}
+aside .brand div b{font-size:13px;font-weight:600;display:block;letter-spacing:.2px}
+aside .brand div span{font-size:10.5px;color:var(--text3);letter-spacing:.3px}
+aside .user{font-size:12px;color:var(--text2);background:#FAF9F5;border:1px solid var(--line);border-radius:9px;padding:7px 10px;margin-bottom:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.navgrp{margin-bottom:14px}
+.navlbl{font-size:10.5px;color:var(--text3);letter-spacing:1.2px;padding:0 10px 5px;font-weight:500}
+aside button.nav{border:none;background:none;text-align:left;padding:8px 10px;border-radius:9px;font-size:13px;
+  color:var(--text2);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;width:100%;
+  transition:background .14s,color .14s;position:relative;margin-bottom:1px}
+aside button.nav .ic{font-size:14px;line-height:1;width:17px;text-align:center;filter:saturate(.85)}
+aside button.nav:hover{background:#F6F5F1;color:var(--text)}
+aside button.nav.on{background:var(--p-bg);color:var(--p);font-weight:600}
+aside button.nav.on .ic{filter:none}
+aside button.nav.on:before{content:"";position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:16px;border-radius:0 3px 3px 0;background:var(--p)}
+aside .bottom{margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.more-box{padding:2px 0 2px 6px;margin-bottom:2px;border-left:1px dashed var(--line2);margin-left:12px}
+.more-box button.nav{font-size:12.5px;padding:6px 9px;color:var(--text3)}
+.more-box button.nav:hover{color:var(--text)}
+main{flex:1;min-width:0;padding:30px 40px 60px;max-width:1040px;margin:0 auto}
+.pane{display:none}.pane.on{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+/* ---------- 页面头 ---------- */
+.phead{margin-bottom:20px}
+.phead h1{font-size:21px;font-weight:600;letter-spacing:.2px;margin-bottom:3px;display:flex;align-items:center;gap:9px}
+.phead p{font-size:12.5px;color:var(--text3);line-height:1.7}
+
+/* ---------- 卡片与排版 ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:14px;box-shadow:var(--sh)}
+h2{font-size:14.5px;font-weight:600;margin-bottom:8px;letter-spacing:.1px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+h3{font-size:13px;font-weight:600;margin-bottom:7px;color:var(--text2)}
+p,li,td{font-size:13px;color:var(--text2)}
+.muted{color:var(--text3);font-size:12px;line-height:1.75}
+.subtle{font-size:12px;color:var(--text3);line-height:1.75;margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)}
+.hl{color:var(--text);font-weight:600}
+
+/* ---------- 按钮 ---------- */
+.btn{border:none;background:var(--p);color:#fff;padding:9px 17px;border-radius:9px;font-size:13px;
+  cursor:pointer;font-family:inherit;font-weight:500;transition:filter .14s,transform .06s;display:inline-flex;align-items:center;gap:6px;line-height:1.4}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{background:var(--line2);color:#fff;cursor:default}
+.btn.g{background:var(--card);color:var(--text2);border:1px solid var(--line2);font-weight:400}
+.btn.g:hover:not(:disabled){background:#FAF9F5;color:var(--text);border-color:var(--text3);filter:none}
+.btn.t{background:var(--t)}
+.btn.sm{padding:6px 12px;font-size:12px;border-radius:8px}
+
+/* ---------- 表单 ---------- */
+select,textarea,input{font-family:inherit;font-size:13px;padding:8px 11px;border:1px solid var(--line2);
+  border-radius:9px;background:var(--card);color:var(--text);transition:border-color .14s}
+select:focus,textarea:focus,input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(62,82,115,.07)}
+textarea{width:100%;min-height:180px;line-height:1.8;padding:13px;background:#FCFBF8}
+label.fl{display:block;font-size:11.5px;color:var(--text3);margin:12px 0 5px;letter-spacing:.3px}
+
+/* ---------- 上传区 ---------- */
+.drop{border:2px dashed var(--line2);border-radius:14px;padding:28px;text-align:center;background:#FCFBF8;cursor:pointer;font-size:13px;color:var(--text2);transition:border-color .16s,background .16s}
+.drop:hover{border-color:var(--p);background:var(--p-bg)}
+.drop b{display:block;font-size:14px;color:var(--text);margin-bottom:5px;font-weight:600}
+.drop span{font-size:12px;color:var(--text3);line-height:1.75}
+.drop.pasting{border-color:var(--p);background:var(--p-bg)}
+.thumb{display:flex;gap:9px;flex-wrap:wrap;margin-top:11px}
+.thbox{position:relative;width:122px;height:82px;border-radius:10px;overflow:hidden;border:1px solid var(--line2);background:#F7F6F2;cursor:pointer}
+.thbox img{width:100%;height:100%;object-fit:cover;display:block}
+.thbox .tt{position:absolute;top:4px;right:4px;font-size:10px;background:rgba(35,39,46,.66);color:#fff;padding:1px 6px;border-radius:5px}
+.thbox .no{position:absolute;top:4px;left:4px;font-size:10px;background:var(--p);color:#fff;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.thbox .pgs{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(0,0,0,.09)}
+.thbox .pgs i{display:block;height:100%;width:0;background:var(--p);transition:width .18s}
+.prog{margin-top:15px}
+.prog .lbl{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--text2);margin-bottom:7px}
+.prog .lbl b{font-size:13px;color:var(--p);font-variant-numeric:tabular-nums}
+.prog .trk{height:7px;border-radius:4px;background:#EFEDE7;overflow:hidden}
+.prog .trk i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--p),#6C82A6);transition:width .12s linear;border-radius:4px}
+.sec{margin-top:20px;padding-top:17px;border-top:1px solid var(--line)}
+.sec h3{font-size:14px;margin:0 0 6px;font-weight:600}
+.tips{background:var(--a-bg);border:1px solid var(--a-line);border-radius:10px;padding:9px 13px;font-size:12px;color:var(--a);margin-top:11px;line-height:1.75}
+
+/* ---------- 识别结果 ---------- */
+.spk{border:1px solid var(--line);border-radius:11px;margin-top:9px;overflow:hidden;background:var(--card)}
+.spk .hd{display:flex;align-items:center;gap:8px;padding:10px 13px;background:#FAF9F5;cursor:pointer;font-size:13px}
+.spk .hd b{font-weight:600}
+.spk .bd{padding:0 13px;display:none}
+.spk.open .bd{display:block;padding-bottom:9px}
+.say{font-size:13px;line-height:1.85;color:var(--text2);padding:9px 0;border-top:1px dashed var(--line)}
+.say:first-child{border-top:0}
+.say .st{font-size:11px;color:var(--text3);margin-bottom:3px}
+.say [contenteditable]{outline:none;border-radius:6px;padding:1px 4px;transition:background .14s}
+.say [contenteditable]:focus{background:var(--p-bg);box-shadow:0 0 0 2px rgba(62,82,115,.12)}
+.q{display:flex;gap:9px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line)}
+.q .n{flex:0 0 22px;font-size:11px;color:var(--text3);padding-top:4px;font-variant-numeric:tabular-nums}
+.q .tx{flex:1;font-size:13px;line-height:1.8;color:var(--text);outline:none;border-radius:7px;padding:3px 6px;min-height:22px}
+.q .tx:focus{background:var(--p-bg);box-shadow:0 0 0 2px rgba(62,82,115,.12)}
+.q .tx:empty:before{content:"（点这里写）";color:var(--text3)}
+.q .src{flex:0 0 auto;font-size:10px;padding:2px 6px;border-radius:4px;background:#EFEDE7;color:var(--text3);white-space:nowrap}
+.q .src.ai{background:#E9EEF8;color:#3E5273}
+.q .del{flex:0 0 auto;font-size:11px;color:var(--text3);cursor:pointer;padding:2px 5px;border-radius:5px}
+.q .del:hover{color:var(--r);background:var(--r-bg)}
+
+/* ---------- 列表 / 标签 ---------- */
+.row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.tag{font-size:11px;padding:1px 7px;border-radius:5px;border:1px solid var(--line2);color:var(--text2);background:#FCFBF8;white-space:nowrap}
+.tag.p{background:var(--p-bg);border-color:var(--p-line);color:var(--p)}
+.tag.t{background:var(--t-bg);border-color:var(--t-line);color:var(--t)}
+.tag.a{background:var(--a-bg);border-color:var(--a-line);color:var(--a)}
+.tag.r{background:var(--r-bg);border-color:var(--r-line);color:var(--r)}
+.list{display:flex;flex-direction:column;gap:9px}
+.item{border:1px solid var(--line);border-radius:11px;padding:12px 15px;background:var(--card);transition:border-color .14s,background .14s}
+.item.teacher{background:#FBFAF6;border-style:dashed}
+.item.dim{opacity:.52}
+.item.bin{background:#FBFAF6;border-style:dashed}
+.meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.who{font-weight:600;color:var(--text)}
+.quote{font-size:13px;background:#FBFAF6;border-left:2px solid var(--line2);padding:7px 11px;border-radius:0 7px 7px 0;line-height:1.8;color:var(--text2)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+th{color:var(--text3);font-weight:500;font-size:11.5px;letter-spacing:.3px}
+.clist .item{cursor:pointer}
+.clist .item:hover{border-color:var(--p-line);background:#FDFDFB}
+.crumb{font-size:12px;color:var(--text3);margin-bottom:14px}
+.crumb b{color:var(--p);cursor:pointer;font-weight:500}
+.crumb b:hover{text-decoration:underline}
+.warn{background:var(--r-bg);border:1px solid var(--r-line);border-radius:11px;padding:13px 16px;font-size:12.5px;line-height:1.8}
+.warn b{color:var(--r)}
+.ok{background:var(--t-bg);border:1px solid var(--t-line);border-radius:11px;padding:13px 16px;font-size:12.5px;line-height:1.8}
+.ok b{color:var(--t)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;background:var(--p);width:0;transition:width .25s}
+.empty{padding:34px 20px;text-align:center;color:var(--text3);font-size:13px;border:1px dashed var(--line2);border-radius:12px;background:#FCFBF8;line-height:1.9}
+
+/* ---------- 标签页 / 步骤 ---------- */
+.tabs{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:6px 15px;border:1px solid var(--line2);border-radius:20px;font-size:12.5px;cursor:pointer;background:var(--card);color:var(--text2);font-family:inherit;transition:all .14s}
+.tab:hover{border-color:var(--p-line);color:var(--p)}
+.tab.on{background:var(--p-bg);border-color:var(--p-line);color:var(--p);font-weight:600}
+.steps{display:flex;gap:0;margin-bottom:18px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:5px;box-shadow:var(--sh)}
+.step{flex:1;text-align:center;padding:9px 14px;border-radius:9px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px}
+.step:hover{background:#FAF9F5}
+.step.on{background:var(--p);color:#fff;font-weight:600}
+.step .sn{font-size:11px;opacity:.75;font-variant-numeric:tabular-nums}
+.quote[contenteditable="true"]:focus{outline:1px solid var(--p);background:#fff}
+.handoff{font-size:11px;color:var(--text3);margin-left:6px}
+.grp{border:1px solid var(--line);border-radius:11px;margin-bottom:9px;overflow:hidden;background:var(--card)}
+.grp>summary{padding:11px 15px;cursor:pointer;font-size:13px;color:var(--text);background:#FBFAF6;font-weight:500}
+.grp>summary::-webkit-details-marker{display:none}
+.grp>summary:hover{background:#F6F5F1}
+.grp .body{padding:6px 15px 14px}
+.sem{font-size:11.5px;color:var(--text3);margin:18px 0 9px;font-weight:600;letter-spacing:1px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;border:1px solid var(--line2);border-radius:20px;padding:3px 11px;color:var(--text2);cursor:pointer;background:var(--card)}
+.pill.on{background:var(--t-bg);border-color:var(--t-line);color:var(--t)}
+
+/* ---------- 学员操作条 ---------- */
+.ops{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px;padding-top:11px;border-top:1px dashed var(--line)}
+.ops button{font-size:12px;padding:5px 11px;border:1px solid var(--line2);background:var(--card);border-radius:7px;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .14s}
+.ops button:hover{border-color:var(--p);color:var(--p);background:var(--p-bg)}
+.ops button.danger:hover{border-color:var(--r);color:var(--r);background:var(--r-bg)}
+.hist{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* ---------- 对话框 ---------- */
+.dlg{position:fixed;inset:0;background:rgba(28,32,38,.42);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.dlg .box{background:var(--card);border-radius:16px;padding:24px;width:470px;max-width:92vw;max-height:86vh;overflow:auto;box-shadow:0 24px 70px rgba(28,32,38,.22)}
+.dlg h3{margin:0 0 6px;font-size:16px;font-weight:600;color:var(--text)}
+.dlg p.hint{margin:6px 0 10px;font-size:12px;color:var(--text3);line-height:1.75}
+.dlg label{display:block;font-size:12px;color:var(--text2);margin:13px 0 5px}
+.dlg input,.dlg select{width:100%;box-sizing:border-box}
+.dlg .foot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+/* ---------- 话题骨架 ---------- */
+.tgrid{display:flex;flex-direction:column;gap:8px;margin-top:11px}
+.tcell{border:1px solid var(--line);border-radius:11px;padding:10px 13px;background:var(--card)}
+.tcell .thd{display:flex;align-items:center;gap:8px;font-size:13px}
+.tcell .thd b{font-weight:600;flex:1;color:var(--text)}
+.tcell .tn{flex:0 0 19px;height:19px;border-radius:5px;background:#EFEDE7;color:var(--text3);font-size:11px;display:flex;align-items:center;justify-content:center}
+.tcell .tc{font-size:11px;color:var(--text3)}
+.tcell .tul{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tcell .tw{font-size:11px;padding:2px 8px;border-radius:5px;background:#EFF7F2;color:#2D6B52;border:1px solid #D8EADF}
+.tcell .tw.off{background:#FBFAF6;color:#B8B3A8;border-color:var(--line)}
+.tgrp{margin:11px 0 4px}
+.tgrp .tgh{font-size:11px;color:var(--p);font-weight:600;margin-bottom:3px;letter-spacing:.2px}
+.tgrp.off .tgh{color:var(--text3);font-weight:400}
+.tgrp2{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.tgrp2:first-of-type{border-top:0;padding-top:0}
+.tgh2{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:9px}
+.tgh2 .tn{flex:0 0 19px;height:19px;border-radius:5px;background:#EFEDE7;color:var(--text3);font-size:11px;display:flex;align-items:center;justify-content:center}
+.tgh2 .tc{font-size:11px;color:var(--text3)}
+.tgh2 b{color:var(--text)}
+
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <div class="cardbox">
+    <img src="logo.png" alt="开窍鸦思辨">
+    <h1>档案智能体</h1>
+    <p>教师独立档案库 · v1.1</p>
+    <input type="text" id="lu" placeholder="用户名" autocomplete="off">
+    <input type="password" id="lp" placeholder="密码">
+    <div class="err" id="lerr"></div>
+    <button class="btn" style="width:100%" onclick="doLogin()">登录</button>
+    <div class="demo-hint">7 位老师 · 初始密码 kaiqiaoya<br>管理员：zhaobowen / songzhuo / wangkang<br>教师：yanzibo / xiaoxin / liuchang / wuyao</div>
+  </div>
+</div>
+
+<div id="pwdModal" class="hidden">
+  <div class="cardbox" style="width:400px">
+    <h1>首次登录，请修改密码</h1>
+    <p>统一初始密码不安全，改完才能进入系统</p>
+    <input type="password" id="np1" placeholder="新密码（至少 6 位）">
+    <input type="password" id="np2" placeholder="再输入一次">
+    <div class="err" id="perr"></div>
+    <button class="btn" style="width:100%" onclick="doChangePwd()">保存并进入</button>
+  </div>
+</div>
+
+<div id="notice" class="hidden">
+  <div class="notice-card">
+    <h2>使用前请知悉</h2>
+    <div class="sub">规则与边界 · 每次登录都会显示</div>
+    <ul>
+      <li>这个工具只在<b>课后</b>使用，不会出现在课堂上。</li>
+      <li>它只做记录和整理：<b>不评对错、不给标准答案、不评价孩子的立场</b>。</li>
+      <li>孩子没发言<b>不会</b>被记成能力低；看不清的发言会标灰，不会被打低分。</li>
+      <li>孩子只说「两边都有道理」而没给出具体判断，<b>不会</b>被记为进步，会标为「待引导」。</li>
+      <li>系统不做孩子之间的排名比较。</li>
+      <li>发给家长的所有内容，必须由你<b>亲自审阅、修改并签发</b>后才会发出。</li>
+      <li>课堂板书与档案保留<b>最近 11 个月</b>；每年生成一份<b>年度快照</b>长期保存，用于保留长程轨迹。</li>
+      <li>管理员查看任意班级档案会<b>留下访问记录</b>，可在「访问日志」中查看。</li>
+      <li>学员档案<b>不跟随班级</b>：改名、转班、升学期、换老师，档案都连续；删除只进回收站，可恢复。</li>
+      <li>一个孩子可以<b>同时上两个班</b>；各班板书上的写法可以不同（如「朵朵」/「朵朵A」），识别时只在<b>本班名单</b>里比对，不会串班。</li>
+      <li>上完课的孩子标记为<b>已结课</b>：退出名单但档案全留，随时可复课；删除班级前会拦截，避免课次记录跟着班一起失效。</li>
+      <li>板书按<b>话题</b>切分：每个话题下谁说过话、谁整段沉默，一眼能看到。<b>沉默不等于不会</b>，可能只是没被叫到。</li>
+      <li>八维信号<b>只从学生的原话推导</b>，每条都带证据句子。这是规则初判，不是模型判断，也<b>不参考年级</b>——它只提示，不替你做决定。</li>
+      <li>老师引入理论工具<b>之后</b>的发言只观察、不用于升级（框架后），避免把「学会了新词」误当成「想得更深」。</li>
+      <li>样本少于 <b>3 节</b>时，学情总结会主动提示「结论可能是偶然」，不建议直接发给家长。</li>
+    </ul>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="closeNotice()">我已了解</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <aside>
+    <div class="brand">
+      <img src="logo.png" alt="">
+      <div><b>开窍鸦思辨</b><span>档案智能体 v1.1</span></div>
+    </div>
+    <div class="user" id="userChip"></div>
+
+    <div class="navgrp">
+      <div class="navlbl">每天用</div>
+      <button class="nav on" data-t="p_upload"><span class="ic">📝</span>上传板书</button>
+      <button class="nav" data-t="p_archive"><span class="ic">🎒</span>学员档案</button>
+    </div>
+
+    <div class="navgrp">
+      <div class="navlbl">跟家长沟通</div>
+      <button class="nav" data-t="p_report"><span class="ic">💬</span>学情与家长版</button>
+    </div>
+
+    <div class="navgrp">
+      <div class="navlbl">需要时查</div>
+      <button class="nav" data-t="p_course"><span class="ic">📚</span>课程档案</button>
+    </div>
+
+    <div class="bottom">
+      <button class="nav" id="moreBtn" onclick="toggleMore()"><span class="ic">⚙️</span>更多</button>
+      <div id="moreBox" class="more-box hidden">
+        <button class="nav hidden" id="navLog" data-t="p_log"><span class="ic">📜</span>访问日志</button>
+        <button class="nav" data-t="p_maint"><span class="ic">🗂</span>数据维护</button>
+        <button class="nav" onclick="showRules()"><span class="ic">📖</span>使用规则</button>
+      </div>
+      <button class="nav" onclick="doLogout()"><span class="ic">🚪</span>退出登录</button>
+    </div>
+  </aside>
+  <main>
+    <div class="pane on" id="p_upload"></div>
+    <div class="pane" id="p_archive"></div>
+    <div class="pane" id="p_report"></div>
+    <div class="pane" id="p_course"></div>
+    <div class="pane" id="p_log"></div>
+    <div class="pane" id="p_maint"></div>
+  </main>
+</div>
+
+<script>
+var LVLS=["L1","L2","L3","L4","L5","L6","L7","L8"];
+var RETENTION=11;
+var DIMS=["D1 立场与开放","D2 分析与推导","D3 标准自觉","D4 例证能力","D5 收束与决断","D6 互动回应","D7 概念迁移","D8 问题生成"];
+// 六档检索：按"最近 N 节有记录的课"读取，不按自然月
+// 前期密后期疏：3 节做首轮沟通，7/12 学期中，24/36/48 长程
+var SCOPES=[{n:3,label:"近 3 节"},{n:7,label:"近 7 节"},{n:12,label:"近 12 节"},
+            {n:24,label:"近 24 节"},{n:36,label:"近 36 节"},{n:48,label:"近 48 节"}];
+var ACCOUNTS=[
+ {u:"zhaobowen",admin:true,name:"赵博文"},
+ {u:"songzhuo",admin:true,name:"宋卓"},
+ {u:"wangkang",admin:true,name:"王康"},
+ {u:"yanzibo",admin:false,name:"晏梓博"},
+ {u:"xiaoxin",admin:false,name:"肖鑫"},
+ {u:"liuchang",admin:false,name:"刘畅"},
+ {u:"wuyao",admin:false,name:"吴垚"}
+];
+var PWD="kaiqiaoya";
+
+var COURSE_ARCHIVE=[{"grade":"Preschool · 一年级下","sem":"Preschool","units":[{"unit":"环境和自我理解","lessons":[{"id":"7","name":"我的名字这么多","pkg":"新课纲LVA-24","goal":"| 核心问题 | p6 我给自己取名字 p21 与众不同的苦恼 背景知识 破课视频 课节","tasks":"| 详见PPT"},{"id":"8","name":"毛毛虫变蝴蝶","pkg":"新课纲LVA-08","goal":"【认知目标】 ①让孩子从“万物有灵”的思维中脱离出来，意识到 不是万事万物都有生命。 ②由生命话题过度死亡话题，以一种更适合孩子的角 度和方法，让孩子从对死亡讳莫如深的社会中，能找 到自己关于死亡的理解","tasks":"1、游戏：介绍玩具 2、你觉得，泰迪熊，是活的吗？为什么？ 3、凯蒂的这些证据，可以证明泰迪熊是“活的”吗？ 4、你可以通过哪些办法，来确定泰迪熊是不是活的呢 5、用自己的话说一说，怎么才算是活的呢？ 6、这个苹果，是死的，还是活的？ 7、…"}]},{"unit":"逻辑与表达","lessons":[{"id":"6","name":"收集东，收集西","pkg":"新课纲LVA-11","goal":"【通识知识】 白马非马的哲学故事 【认知突破】 学会分类 理解分类的重要性 理解属于的概念 持续性目标—— 【思维能力】 分类能力：会将具有相同特点的事物归为一类 【表达能力】 明确属于和是的区别 并且会正确使用 【情感价值观】 学会理性地将生活中的事物分类，做到心中有 杆秤，一方面避免成为“小霸王…","tasks":"1.阅读绘本，记忆关键情节 2.定义东西，能说出自己收集的东西 3.通过收集游戏，有初步的类别概念 4.对收集游戏做进一步的思考，明确提出分类概念 5.通过自己给几何体分类了解分类有不同的标准 6.了解白马非马的故事 7.分析并被知识补充白…"}]},{"unit":"思维与创造","lessons":[{"id":"2","name":"你能看见鲸鱼吗？","pkg":"新课纲LVA-12","goal":"【认知突破】对同一件事，不同人有不同的说法，不一 定是有人故意说错，每个人说的可能都是自己看到的事 实；每个人都有自己的角度，所以看到的事实不同，观 点想法也会不同。 【思维能力】思考帽 黄帽子：肯定思考，有什么优点好处 黑帽子：质疑思考，可能有什么问题 红帽子：直觉思考，第一反应、情绪感受","tasks":"1. 游戏 神秘的房间 2. 去哪里找鲸鱼？ 3. 当别人都不相信你时，你还有必要坚持自己原来的 说法吗？ 4. 如果你是小女孩，用什么办法才能让人相信你真的 有鲸鱼？ 5. 如果小渔村成为“鲸鱼水乐园”，会发生哪些变 化？ 6. 选择一种…"}]}]},{"grade":"S1 · 二年级上","sem":"S1","units":[{"unit":"思维与创造","lessons":[{"id":"27","name":"帽子时装周","pkg":"新课纲LVA-01","goal":"即时性目标—— 【通识知识】 【文学】《重要书》作者：玛格丽特·怀兹·布朗 【思考工具】 比较思考法：把一样东西和同类的东西比一比，找到描 述这样东西的方法。 【认知突破】 描述一样事物的重要特点是有标准、有角度的，但我们 对于事物的看法有时可以跳出这些标准，可以用变化 的、创意的眼光来看待。 持续…","tasks":"（第一课时） 【游戏】是，不是？ 【话题讨论】重要书 【思考工具箱】比较思考法 【绘本阅读】《天啊，错啦》 （第二课时） 【阅读讨论】裤衩还是帽子？ 【话题讨论】可以当作帽子的东西 【收尾】课堂总结和课后分享任务布置 【思维能力】 创造性思…"}]},{"unit":"逻辑与表达","lessons":[{"id":"29","name":"你要来天才学校吗？","pkg":"新课纲LVA-19","goal":"| 核心问题 | 1.（次重要）你希望成为轻轻松松就什么事情都做的比别人好的天才吗？为什么？ 2.（重要）你建议卡米耶接受邀请，还是拒绝邀请？ 3.（次重要）如果你是卡米耶，面对不同的课程，你会作何选择？ 4.（重要）你认为，两位学生谁是最优秀的学生？ 背景知识 破课视频 课节","tasks":"| （课前）在了解这本书的内容之前，只看这个标题，有让你感到好奇的问题吗？ （课前）标题小侦探：你能从标题中，猜到故事里的哪些重要信息？ （课前）试试看：从下面的标题选一个，用一句话猜猜故事内容吧！ 在书中，为什么卡米耶被称为天才小狼？ 你…"},{"id":"30","name":"小熊为什么不吃巧克力？","pkg":"新课纲LVA-02","goal":"1、让孩子明白什么是假设出的【可能原因】，什么时 可以证实的【关键原因】 2、在提出自己的分析时意识到需要充足的事实论据 去支撑自己的结论。 3、在分析他人的行为时学会考虑多种可能性抓住问 题关键点，提升与人共情的能力。","tasks":"1. 小熊为什么不吃小饼干（了解【可能原因】并学会分类） 2. 小熊的糖果店 问题一：为什么经营不善（环节一练习） 3. 小熊的糖果店 问题二：如何确定关键原因（验证假设） 4. 小兔子的结论 （反驳归因偏差） 5. 小熊的解释（补充问题）…"}]},{"unit":"情绪与自我管理","lessons":[{"id":"34","name":"怎么记住100件事？","pkg":"新课纲LVA-04","goal":"即时性目标—— 【通识知识】 / 【思考工具】 用清单帮助思考规划和记忆的“清单思考法”。 有用的记忆方法：拆解、分类等。 【认知突破】 列清单对我们有帮助，但要注意不要被清单控制和约束 了，按照清单做事也要灵活变通、留有余地。 持续性目标—— 【思维能力】 批判性思维：辩论用清单规划旅行计划的利弊…","tasks":"（第一课时） 【游戏】记忆游戏 【问题讨论】关于记忆的问题 【绘本阅读】《青蛙和蟾蜍好伙伴：工作表》+故事 复述 （第二课时） 【小辩论】要不要写清单 【任务分享】给自己写一份半年清单 【课节收尾】总结、作业布置 【表达能力】 1）在辩论中…"}]},{"unit":"环境和自我理解","lessons":[{"id":"31","name":"生气禁止令","pkg":"新课纲LVA-05","goal":"即时性目标—— 【通识知识】 / 【思考工具】 拆解过程、问题、任务、目标等，使之更加清晰和便于 处理的“阶梯思考法” 【认知突破】 生气是人正常的一种情绪，也不总是负面的，我们不是 要消灭生气（可能也很难消灭），而是要管理生气带来 的消极影响。 持续性目标—— 【思维能力】 批判性思维：综合思考生…","tasks":"（第一课时） 【绘本阅读】读前讨论+《生气的亚瑟》 【阅读梳理】亚瑟的情绪级别报告 【思考工具箱】阶梯思考法 【问题讨论】禁止生气倡议书 （第二课时） 【情景讨论】能不能表达生气、怎么缓解情绪 【方法分享】如何良性发泄生气的情绪+诗歌绘本分…"}]},{"unit":"想象力启蒙","lessons":[{"id":"43","name":"滑梯上的小老鼠","pkg":"新课纲LVA-14","goal":"【认知突破】 1、理解并掌握“以偏概全”和“滑坡谬误” 2、回顾之前三节课所学知；“假设-验证”（《小熊一 家的故事》）“三顶思考帽”（《你能看见鲸鱼吗》） “透过现象看本质”（《当怪兽变成超人》）等方法。 3、让孩子在日后日常生活中，在回答“为什么”这一 类问题的时候，要先问一下自己“是不是”。（…","tasks":"1、在你的印象中，侦探是做什么的呢？ 2、你知道哪些有名的侦探？ 3、为了证明你拥有成为侦探的能力，你需要从以下 三个挑战中选择一个完成 4、通过向兔叽叽提出问题获得关键信息，从而了解 在她身上发生了什么 5、你准备问这些邻居们哪些问题？目…"},{"id":"44","name":"地球观察日记","pkg":"新课纲LVA-10","goal":"| 核心问题 | 1.为什么到现在为止，我们还没有发现外星人呢？ 2.外星人学会了地球人的沟通方法（语言）了吗？ 3.面对这条知识，你还能提出哪些问题？你还有哪些问题想知道？ 背景知识 破课视频 课节","tasks":"| 课前知识小竞赛 分享并介绍自己画的外星人 3.为什么到现在为止，我们还没有发现外星人呢？ 4.阅读绘本 5.心情跌入低谷是0分，超级无敌最开心是100分，标一标外星人在不同时间的心情值吧！ 6.你愿意在外星人刚刚开始探索的时候，就告诉他…"}]},{"unit":"社交与社会意识","lessons":[{"id":"41","name":"正义之士","pkg":"新课纲LVA-13","goal":"【认知突破】 ①是否正义不能仅仅依据一个人的外表，而需要 根据他们的行为来判断。我们将鼓励孩子们去观 察和分析他人的行为，理解其中的动机和意图， 以此来评判一个人的善恶。 ②帮助孩子们认识到好人和坏人并不是绝对的 存在。我们将引导他们思考人性的复杂性和多样 性，理解在某些情境下，一个人的行为可能是善","tasks":"1、你还能说出哪些英雄的名字呢？为什么他 们是英雄？ 2、你觉得奥特曼是英雄吗？ 3、为什么奥特曼打我，他就是英雄，要是我 长成奥特曼的样子呢？ 4、要是奥特曼欺负了人，我去打奥特曼，大 家会把我当作英雄吗？ 5、火眼金睛的同学们，我们应该…"}]}]},{"grade":"S2 · 二年级下","sem":"S2","units":[{"unit":"逻辑与表达","lessons":[{"id":"53","name":"书里讲的都对吗？","pkg":"新课纲LVB-02","goal":"即时性目标—— 【通识知识】 1）斯宾塞《什么知识最有价值》 2）登月造假的阴谋论及其反思 【思考工具】 相对比较法：在同一个角度/标准下进行两两比较的思 考意识 【认知突破】 知识都可以有用，但相比较而言，有更加重要的知识 知识不一定都是对的，但是什么都不信也是不合理的 持续性目标—— 【思维能力…","tasks":"（第一课时） 【任务活动】安妮的知识芯片 【绘本阅读】《月亮去哪儿了》+读后讨论 （第二课时） 【问题讨论】知识来源的可靠性 【问题讨论】确定真知识的方法 【问题讨论】对阴谋论的思考 追问反思 【表达能力】 创意回答：针对一个问题给出天马行…"},{"id":"54","name":"对学习来说最重要的是什么？","pkg":"新课纲LVB-06","goal":"即时性目标—— 【通识知识】 / 【思考工具】 图解思考法之树状图：列举好坏做判断 【认知突破】 看到事情的结果和事情的过程都有重要性，不可割裂， 努力的过程帮助人进步，经历过程也让人获得独特体验 和经验教训，但同时结果是真正有实效的东西，也能帮 助检验做事过程中的态度方法是否存在问题。 持续性目标…","tasks":"（第一课时） 【问题讨论】给学生评级+反思评价标准 【读前讨论】故事预测 （第二课时） 【读前讨论】思考工具箱+是否建议参赛 【绘本阅读】《生蛋快乐》 【读后讨论】获得结果还是体验过程 【问题讨论】按不按按钮 【课节收尾】 批判性思维：比较…"}]},{"unit":"环境和自我理解","lessons":[{"id":"55","name":"棉花糖实验","pkg":"新课纲LVB-05","goal":"即时性目标—— 【通识知识】 冷聚焦策略 【思考工具】 文字图像化思考法：想象并描述更加具体的细节 【认知突破】 我们的很多欲求可能是天性，但天性不等于就是合理， 在可选择的情况下，应当综合考虑，去做理性的思考和 选择 持续性目标—— 【思维能力】","tasks":"（第一课时） 【想象游戏】看不见的棒棒糖 【情景实验】什么都有的零食屋（三个问题） 【绘本阅读】《怎么才能不吃掉我的朋友？》 （第二课时） 【问题讨论】绘本讨论（四个问题） 批判性思维：对各种知识的来源及其可靠性进行不断的 追问反思 【表达…"},{"id":"56","name":"成长需要挫折吗？","pkg":"新课纲LVB-07","goal":"即时性目标—— 【通识知识】 安徒生的故事 【思考工具】 图解思考法之树状图：列举自己的优点、不足与进步 【认知突破】 丑小鸭并不是因为吃苦才变成白天鹅的，所以很多所谓 的吃苦耐劳本身并没有什么真实的意义，在此基础上， 我们再去探索苦难真正的意义是什么——帮助我们强大 内心，获得更加丰富的经验和自我…","tasks":"（第一课时） 【绘本阅读】《丑小鸭》+故事回顾梳理 【问题讨论】嘲笑的原因和应对 【角色扮演】动物们怎么说、要不要回去 （第二课时） 【问题讨论】丑小鸭是否白吃苦 【问题讨论】现实中需不需要学会吃苦 【课节收尾】 持续性目标—— 【思维能力…"}]},{"unit":"情绪与自我管理","lessons":[{"id":"58","name":"坚持到底一定是对的吗？","pkg":"新课纲LVB-08","goal":"即时性目标—— 【通识知识】 愚公移山的故事 【思考工具】 愿望追问法：抓住人物愿望概括故事 【认知突破】 1）成功与否的评价有不同标准，选择哪个标准在于你 认为什么最重要； 2）并不是什么事情都是坚持到底就是好的，有些情况 下要学会放弃。","tasks":"（第一课时） 【绘本阅读】《愚公移山》+故事回顾梳理 【读后分享】困难和克服的办法 （第二课时） 【问题讨论】愚公成功了吗？ 【问题讨论】要不要坚持？什么该坚持，什么该放 弃？ 【课节收尾】 持续性目标—— 【思维能力】 批判性思维：分析愚…"}]},{"unit":"社交与社会意识","lessons":[{"id":"64","name":"心想事成的口袋","pkg":"新课纲LVB-10","goal":"即时性目标—— 【通识知识】 / 【思考工具】 “目标+方法”思考法：从一件事本身该不该做和该如 何做，来评价和分析一件事情 【认知突破】 助人为乐是美德，但也需要考虑背后的很多问题，并非 不假思索去帮别人就是对的。 持续性目标—— 【思维能力】 批判性思维：分析帮助中可能存在的问题；在两难中商","tasks":"（第一课时） 【分享】用神笔做什么 【问题讨论】帮助中的问题和建议 【绘本阅读】三个强盗 【问题讨论】强盗算好人吗？ （第二课时） 【问题讨论】抓不抓强盗 【问题讨论】怎样处理善后问题 【延伸思考】能不能强迫帮助 【课节收尾】 讨最合适的问…"},{"id":"65","name":"今天我当家","pkg":"新课纲LVB-11","goal":"【思维认知突破】 原有认知：家务也就那些，家务不用给钱 认知突破：不是的，家务具体包含了理财、收纳、烹饪 等，想要做好家务，需要很多专业知识与综合能力。做 家务无偿且难以返回社会，很多国家和地区都在尝试推 进家务有偿。 原有认知：女性的确更适合做家务 认知突破：这个请综合老师们自己查阅的知识和想法看…","tasks":"及 核心问题 【第一课时】-对家务的一些固有印象试探 【问题讨论】家庭的分工（谁做家务初印象探讨） 【角色扮演】谁是最辛苦的人（孩子对家务的付出、 不同工作的衡量初印象试探） 【第二课时】-家庭劳动的特点及社会看待方式探讨 【绘本阅读】《惹…"}]},{"unit":"思维与创造","lessons":[{"id":"49","name":"机器人实验","pkg":"新课纲LVB-13","goal":"即时性目标—— 【通识知识】 心理学：想法的层次划分 【思考工具】 自我意见建立法：独立思考的步骤 【认知突破】 人的想法是有不同层次的，“思考”应当区别于简单的 感知、表征和被动接受信息 持续性目标—— 【思维能力】 批判性思维：探究抽象概念，以分析过程区分概念的不","tasks":"（第一课时） 【游戏】什么也不想+游戏讨论 【问题讨论】什么是思考 （第二课时） 【绘本阅读】《机器人心里的蓝鸟》+读后讨论 【问题讨论】要不要跳下去（独立思考的过程） 【延伸思考】什么问题需要主动思考 同层次 【表达能力】 诗歌创作：什么…"},{"id":"50","name":"不存在的文具盒","pkg":"新课纲LVB-15","goal":"即时性目标—— 【通识知识】 / 【思考工具】 图解思考法之圆圈图：列举，逐一考虑和排除 【认知突破】 我们所拥有的东西不总是越多越好，有的东西我们不需 要，有的会带来负面影响；但很多看上去负面的东西， 也许也有其存在的价值 持续性目标—— 【思维能力】","tasks":"（第一课时） 【思考游戏】空空荡荡的笔盒：列举剩下的东西 【问题讨论】如何进一步清理从而靠近“什么都没 有” （第二课时） 【绘本阅读】《我要买“什么都没有”》 【读后讨论】为什么愿意花钱买 【问题讨论】想让什么东西没有 批判性思维：一些从…"},{"id":"51","name":"世界上有没有一模一样的两片叶子？","pkg":"新课纲LVB-16","goal":"即时性目标—— 【通识知识】 经典哲学问题——忒修斯之船 【思考工具】 图解思考法之双重气泡图：比较相同和不同点，再进行 分析 【认知突破】 不是所有改变都是必须的、好的；我们可以再变化中看 到不变的东西，在不变中看到变化的东西 持续性目标—— 【思维能力】 批判性思维：用清楚的标准回答“忒修斯之船…","tasks":"（第一课时） 【问题讨论】忒修斯之船-更换零件的船 【问题讨论】忒修斯之船-两艘船比较 （第二课时） 【绘本阅读】《大海里的小岛》+阅读讨论 【问题讨论】是否存在永恒不变的事物 【表达能力】 介绍信：站在小动物角度介绍“自己”的变与不变 【…"}]},{"unit":"认识世界","lessons":[{"id":"61","name":"古人为什么会做飞天梦？","pkg":"新课纲LVB-14","goal":"即时性目标—— 【通识知识】 神话故事：盘古开天地 【思考工具】 图解思考法之气泡图：描述并明确一个对象，再思考关 于它的问题 【认知突破】 神话和科学是解释世界的两种不同方式，尽管一般认为 科学更加进步和可靠，神话、想象也依然有自己的价 值，因为科学还做不到解释我们世界上的所有问题。","tasks":"（第一课时） 【问题讨论】世界的起源 【绘本阅读】《盘古开天》 （第二课时） 【问题讨论】盘古开天读后讨论 【问题讨论】有没有神仙 【延伸思考】什么科学家相信有神仙 持续性目标—— 【思维能力】 批判性思维：神仙存在的证明与反驳 【表达能力…"}]},{"unit":"科学启蒙","lessons":[{"id":"67","name":"《洛巴托科学课》上：史上第一个发明家","pkg":"新课纲LVB-21","goal":"即时性目标—— 【通识知识】 海里为什么有盐、水循环的描述 【思考工具】 阅读策略：找锁解锁法——用问题和答案的框架标记关 键内容 阅读策略：图文结合理解说明性内容 【认知突破】 1）科学探究的思路不是那么高深莫测的东西，即使是 原始人看问题，也可能具备科学研究的基本思路。 2）科学实验不是为了好玩…","tasks":"【课前分享】 （第一课时） 【提问】洗衣服中的科学问题 【问题讨论】哪些算科学问题 【问题讨论】原始人阿燧看到的现象、提问、假设以 及假设的意义 （第二课时） 【问题讨论】难吃的蛋糕：提问、假设、探究方法 【分享】实验中的思考 【解释表达】…"},{"id":"68","name":"《洛巴托科学课》中：发明家的研发笔记","pkg":"新课纲LVB-22","goal":"即时性目标—— 【通识知识】 关于热的知识；各种材料的特性；取火工具的发明与改 进 【思考工具】 阅读策略：阅读-遮盖-记忆-复述法——集中注意记忆 和考察关键知识 【认知突破】 科学发明不是为了发明而发明，科学发明是为了解决现 实中的不方便等问题；科学发明很难一步到位，发明家 也会挨骂，关键是承认…","tasks":"【课前分享】 （第一课时） 【知识回顾】热如何进入瓶子+怎么挡热初步设计 【信息梳理】各种材料的优缺点 【发明设计】设计自己的饮料袋（设计） （第二课时） 【发明设计】设计自己的饮料袋（分享） 【问题讨论】被骂的发明家怎么办 【发明设计】生…"},{"id":"69","name":"《洛巴托科学课》下：发明是柄双刃剑","pkg":"新课纲LVB-23","goal":"即时性目标—— 【通识知识】 塑料污染和塑料瓶的旅程 【思考工具】 阅读策略：画箭头串联知识点——串联信息解答问题 【认知突破】 科技的发展不只有好处，也会带来许多环境问题，但解 决环境问题也要利用科技自身的发展。 持续性目标—— 【思维能力】 系统性思维：用系统思维分析人类行为对环境和自身的","tasks":"【课前分享】 （第一课时） 【问题思考】小A村投票+发言（发言可跳） 【系统连线】小A村问题和挖矿的关联 【系统思考】衣食住行行为的问题 （第二课时） 【问题思考】塑料的重要性 【问题思考】科技是不是弊大于利 【科技畅想】科技如何解决环境问…"}]}]},{"grade":"S3 · 三年级上","sem":"S3","units":[{"unit":"情绪与自我管理","lessons":[{"id":"81","name":"讨厌怪兽创造工厂","pkg":"新课纲LVA-06","goal":"【人文社科知识】 【文学】《小乔治的神奇魔药》、《讨厌黑夜的席奶奶》 【心理学】伯纳金讨厌心理、达娜·哈伦“惧怕自我”理论 【思辨思维工具】 识别和提炼关键信息，形成解决问题的意识 【核心能力品质】 情绪管理、社交能力 【表达手法技能】 微小说—议程交流、故事分享、动词写作","tasks":"【话题讨论】用一句话，分享生活中你最 讨厌的事 【问题讨论】遇到讨厌的事，你通常会怎 么做 【写作技巧】席奶奶对付黑夜，动词写作 【话题辩论】黑夜可以被赶走吗？ 【话题辩论】如果有人做了让人讨厌的 事，我们可不可以用不好的方式对当代 他？ …"},{"id":"81","name":"讨厌怪兽创造工厂","pkg":"新课纲LVB-17","goal":"【人文社科知识】 【文学】《小乔治的神奇魔药》、《讨厌黑夜的席奶奶》 【心理学】伯纳金讨厌心理、达娜·哈伦“惧怕自我”理论 【思辨思维工具】 识别和提炼关键信息，形成解决问题的意识 【核心能力品质】 情绪管理、社交能力 【表达手法技能】 微小说—议程交流、故事分享、动词写作","tasks":"【话题讨论】用一句话，分享生活中你最 讨厌的事 【问题讨论】遇到讨厌的事，你通常会怎 么做 【写作技巧】席奶奶对付黑夜，动词写作 【话题辩论】黑夜可以被赶走吗？ 【话题辩论】如果有人做了让人讨厌的 事，我们可不可以用不好的方式对当代 他？ …"},{"id":"82","name":"勇者的比赛","pkg":"新课纲LVB-19","goal":"【人文社科知识】 【心理学】勇气心理与行为冲动 【思辨思维工具】 归纳--从具体事例中总结概念、建 立评价标准的意识 【核心能力品质】 成长型思维、勇气 【表达手法技能】 记叙文—举例叙述、评选讨论、名 言引用","tasks":"【话题讨论】举例说明怎么才算是勇敢 【话题讨论】定义勇敢的标准 【阅读思考】 谁是勇敢者 【阅读讨论】猜测麻雀思考这么久的原 因；并讨论麻雀的行为，算不算勇敢 【书写练习】写下颁奖词 【话题讨论】你有没有害怕的时候，是 不是所有的事都应该无…"},{"id":"83","name":"与众不同的“大明星”","pkg":"新课纲LVB-18","goal":"【人文社科知识】 【文学】德国经典童话《火鞋与风鞋》、《绿山墙的安 妮》 【哲学】莱布尼茨“个体的差异” 【思辨思维工具】 比较相同点与不同点，意识到事物有正反两面 【核心能力品质】 自我分析、自我价值认同 【表达手法技能】 记叙文—观察、对比、反思评价","tasks":"【游戏活动】观察力游戏找相同 【问题讨论】说一件你认为自己最与众不同的事。 （重要） 【问题讨论】和别人不一样，在哪些情况下是好 事，哪些情况是坏事呢？ 【绘本阅读】汉斯做到了哪些不一样？这些不一 样，给它带来了什么好处？什么坏处？ 【话题…"}]},{"unit":"思维与创造","lessons":[{"id":"73","name":"我叫十万个为什么","pkg":"新课纲LVB-01","goal":"【人文社科知识】 【科学】物种起源、考古化石、OC-17 生物物质 【文学】《爸爸为什么》夸张和幽默的手法 【思辨思维工具】 区分事实与观点、激发提出问题的动机、辨别问题属性 【核心能力品质】 好奇心与动机、提问意识 【表达手法技能】 问答式诗歌仿写","tasks":"【课堂辩论】先有鸡还是先有蛋 【科学视频】先有鸡还是先有蛋的科学证 据 【头脑风暴】问题大王比一比 【辨别问题】辨别大问题小问题 【问题讨论】既然找不到完美的答案，为 什么还要提问和聆听 【创意思考】爸爸为什么创意问答 事实与观点练习 5-…"},{"id":"74","name":"天上会不会下猪？","pkg":"新课纲LVB-03","goal":"【人文社科知识】 【历史】矛盾认知典故与内涵 【文学】《乌龟不可能牙疼》故事可能性分析、《凡尔 医生出诊记》的延伸想象 【思辨思维工具】 识别关键信息、识别逻辑矛盾、多角度思维 【核心能力品质】 辨别力、想象力 【表达手法技能】 续编——情节想象","tasks":"【思维游戏】判断事件可能还是不可能 （重要） 【投票选择】判断不可能的标准 【问题讨论】矛盾的创意思考（重要） 【问题讨论】如果阿尔伯特没有撒谎为什 么不可能的会变成可能？ 【问题讨论】看似矛盾的事物可不可能出 现（重要） 【思考与表达】《…"},{"id":"75","name":"关于“点”的一百种可能","pkg":"新课纲LVB-04","goal":"","tasks":""}]},{"unit":"认识世界","lessons":[{"id":"86","name":"天上会不会掉馅饼","pkg":"新课纲LVB-09","goal":"【人文社科知识】 【心理学】运数心理与能动性联 系 【社会学】李坚柔的夺冠故事 【文学】《佐贺的超级阿嬷》 【思辨思维工具】 形成用证据说话的意识、举例说 明、意识到导致一种结果可能有 多种原因 【核心能力品质】 证据意识、成长型思维 【表达手法技能】 微小说—举例、讨论、三段式写 作","tasks":"1. 如果让你把故事中的人物按照“运气”来排名，你会怎么排 呢？为什么？ 2. 我们通常说的运气好，是什么意思呢？（重要） 3. 可以通过努力，提高自己的运气吗？（重要） 4. 小猪倒霉地碰上了狐狸之后，做了哪些事？ 5. 小猪的“幸运一天…"}]},{"unit":"阅读与写作","lessons":[{"id":"93","name":"《火鞋与风鞋》上：旅无归途","pkg":"新课纲LVB-24","goal":"【阅读策略技能】 1）寻找人物面临的问题（阅读手册、课件） 2）发现故事的内在线索（阅读手册、课件） 【思维认知突破】 原有认知：出去旅行就是出去玩一玩，看看风景；在生 命的“旅途”中，最重要的是追求和实现梦想； 认知突破：旅行能打开人的视野，给人新的经验，获得 成长；在生命的“旅途”中，即使理想目…","tasks":"一：提姆的生日 二：提姆的旅行 三：牧羊少年奇幻之旅 核心问题 【问题讨论】牧羊少年 1.0 故事：如何评价店主和圣 地亚哥两个人的选择？（重要） 【问题讨论】牧羊少年 2.0 故事：留在城市里，还是 继续去追梦？（重要） 【问题讨论】牧羊…"},{"id":"94","name":"《火鞋与风鞋》下：无限愿望机","pkg":"新课纲LVB-25","goal":"【阅读策略技能】 1）解读故事的深层道理（阅读手册、课件） 【思维认知突破】 原有认知：我有自己的一些愿望，但我也知道愿望不能 太过分； 认知突破：拥有愿望会给人带来好处，也可能给人带来 负面影响，这与愿望本身的合理适度有关，也与自己对 待愿望的态度和相应行动有关；准确理解自己的愿望也 很重要，在想…","tasks":"环节一：我想……我有……我能…… 环节二：辩论 环节三：点石成金的故事 核心问题 【辩论】知足常乐，还是不知足常乐？（重要） 【问题讨论】提出愿望时，你真正想要的是什么？（重 要） 人生规划与幸福生活：合理且深度的目标意识 背景知识 《火鞋…"}]}]},{"grade":"S4 · 三年级下","sem":"S4","units":[{"unit":"环境和自我理解","lessons":[{"id":"101","name":"欢迎来到捣蛋鬼之家","pkg":"新课纲LVB-20","goal":"【人文社科知识】 【文学】瑞典经典《淘气包埃米尔》 【心理学】淘气行为与后果利弊 【艺术人文】《哈利波特》中的行为创意 【思辨思维工具】 意识到事物有正反两面，举例说明 【核心能力品质】 转变弱势思维 【表达手法技能】 应用——对症下药 【认知突破】 原有认知：淘气就是不好的或淘气就是好的 认知突破…","tasks":"【小表达】故事中的淘气包事例。 【小讨论】淘气的共同点，怎么样算淘气（较重要） 【小归纳】奈吉尔做了哪些淘气的事情 【问题讨论】淘气到底是好事还是坏事（重要） 【问题讨论】淘气隐身术（重要） 【"}]}]},{"grade":"S5 · 四年级上","sem":"S5","units":[{"unit":"思维与创造","lessons":[{"id":"121","name":"变形记","pkg":"新课纲LVC-01","goal":"","tasks":""},{"id":"122","name":"许愿精灵辞职记","pkg":"新课纲LVC-09","goal":"【人文社科知识】 阿拉伯神话、《一千零一夜》 【思辨思维工具】 矛盾分析法、事情的合理性、事件的线性推理、逆向 思考法进行创意 【核心能力品质】 想象力、推理能力、好奇心与动机 【表达手法与技能】 叙事——反转故事","tasks":"【思想实验】阿里的愿望 【思维工具箱】矛盾分析法 【情境体验】请你许个愿（重要） 【分组推理】五个孩子的愿望 【延伸思考】是否要许一天时效的愿望（重要） 核心问题 1.神灯精灵可不可能做到“无所不能”？ 2.我们的愿望如何发展是合情合理且意…"}]},{"unit":"逻辑与表达","lessons":[{"id":"123","name":"我什么时候变成了大人？","pkg":"新课纲LVC-02","goal":"【人文社科知识】 【教育学】“儿童”概念的建构 【社会学】《联合国儿童权利公约》 【思辨思维工具】 概念的多角度比较、权利与责任的平衡思维 【核心能力品质】 自我认知、自我保护 【表达手法技能】 观点——事实证据","tasks":"【问题讨论】做大人好，还是做小孩好？ 【问题讨论】大人和小孩有哪些区别？（重要） 【问题讨论】波波城与可可城的视察汇报（重要） 【任务】《圆桌星球儿童权利公约》 背景知识 一、儿童观 在中世纪，小孩几乎一断奶，就被当作“小大人”看待，他们混…"},{"id":"124","name":"我可以穿裙子吗？","pkg":"新课纲LVC-04","goal":"","tasks":"【辩论】做男生好，还是做女生好？联系生活实际感受男女的区别 【问题讨论】性别刻板印象会带来什么样的影响？ 【思想实验】我究竟该是什么样子？产生行为、爱好的原因和性别有关吗？ 核心问题 1.做男生好，还是做女生好？ 2.性别刻板印象有什么影响…"},{"id":"125","name":"只存在想象中的世界","pkg":"新课纲LVC-11","goal":"【人文社科知识】 【哲学】存在的不同理解、说谎者悖论、罗素“太空 茶壶”的思想实验、圣诞老人的起源、帕斯卡之赌 【思维思辨工具】 用归谬法进行推理、分析部分与整体的关系 【核心能力品质】 好奇心与动机、同理心、推理能力 【表达手法技能】 书信——共情他人 【认知升级】 理解“存在”的多层含义，体会美…","tasks":"【辩论】世界上有没有圣诞老人（重要） 【观点争鸣】帕斯卡之赌；归谬法； 【阅读讨论】有哪些我们看不见但确实存在的例子？ 【课堂讨论】纸飞机存在吗？关于“存在”的不同理 解（重要） 【思考交流】如何回复“真的有圣诞老人吗？”问题 背景知识 1…"},{"id":"126","name":"心想词成","pkg":"新课纲LVC-08","goal":"【人文社科知识】 【艺术人文】马克思的想象观、集体想象的观念 【文学】名人作者的创作灵感来源、《聊斋志异》蒲 松龄的想象\" 【思辨思维工具】 想象力的价值思辨、正反角度对比、比喻成真的方法 运用 【核心能力品质】 想象力、好奇心与动机、善恶评判 【表达手法与技能】 想象——比喻成真 【认知升级】 把…","tasks":"及 核心问题 【阅读思考】吃书的狐狸中的比喻有什么特点、吃书 细节 【成语幻想国】如果成语成真会发生什么事（重要） 【思维工具箱】三步法让比喻成真 【思考讨论】由狐狸的结局思考一个人的成就是否可 以弥补过错？ 【法庭辩论】老鼠受的惩罚应该比…"}]},{"unit":"环境和自我理解","lessons":[{"id":"127","name":"小丑都很快乐吗？","pkg":"新课纲LVC-03","goal":"【人文社科知识】 【心理学】情绪的区分、负面情绪的意义及价值、如 何应对他人施加给自己的负面情绪 【文学】幻想店铺类小说场景沉浸 【思辨思维工具】 代入角色设想后果、换位思考、现实推演 【核心能力品质】 辩证思维、自我保护 【表达手法技能】 叙事——合情推理","tasks":"及 核心问题 【背景引入】闹市里的情绪典当铺 【任务】情绪列举 【问题讨论】没有负面情绪的女孩是不是个幸福的女 孩？（重要） 【分组讨论】失去某一种负面情绪的生活会怎么样？ 【思维工具箱】元素抽离法 【问题讨论】阿珍要继续和阿强做朋友吗？（…"}]},{"unit":"社交与社会意识","lessons":[{"id":"136","name":"可以在游泳池里洗头吗？","pkg":"新课纲LVC-05","goal":"【人文社科知识】 【哲学】规则的作用于局限；马基雅维利主义 【文学】绘本《图书馆的狮子》 【思辨思维工具】 归纳--从具体事例中总结判断标准；辩证-分析 情境条件对事物的影响、从特定角度论证观点 ；多因素排序法 【核心能力与品质】 辩证思维、换位思维 【表达手法与技能】 想象——写出波折","tasks":"及 核心问题 【问题引入】列举生活中的规则 【任务】判断下列哪些规则需要遵守并讲出判断标准 （重要） 【思维工具箱】多因素排除法 【问题讨论】《图书馆里的狮子》文本梳理，什么条件下 规则可以被打破？既然规则可以被打破，我们该需要规则 吗？ …"},{"id":"137","name":"妈妈，我能养豹子吗？","pkg":"新课纲LVC-17","goal":"1.人文社科知识：日本的生命教育课 2. 思维工具：拐点思考法。 3.写作技巧：第一人称写作；动物的权利。 4.认知升级：责任感；对生命的敬畏。","tasks":"1.阅读回顾：怎样才算是宠物？ 2.思考讨论：你想养宠物吗？ 3.电影《小猪教室》辩论：应该吃掉小 P 吗？ 核心问题 1.怎样才算是宠物？ 2.应该吃掉小 P 吗？ 背景知识 动物是否应该有和人类一样的权利？ - 知乎 (zhihu.co…"}]},{"unit":"情绪与自我管理","lessons":[{"id":"131","name":"被救的怎么不能是王子呢？","pkg":"新课纲LVC-10","goal":"【人文社科知识】 童话故事的时代性，传统童话故事新编 【思辨思维工具】 对事物进行多角度的价值判断、水火相容思考法 【核心能力与品质】 想象力、同理心、童心童趣 【表达手法与技能】 叙事——故事新编 【认知升级】 影响孩子成长的的因素是多种多样的，不只有作品， 还有作品外的整个世界。","tasks":"及 核心问题 【课前热身】童话人物猜猜看； 【聊一聊】顽皮公主与传统公主的不同； 【新闻讨论】“王子与公主有毒”你同意新闻中妈妈 的做法和理由吗？（重点） 【瑞贝卡的疑问 1】该下架还是保留有争议的作品？ 【瑞贝卡的疑问 2】有争议的动画片…"}]},{"unit":"阅读与写作","lessons":[{"id":"141","name":"《我是白痴》上：一把名为善良的刀","pkg":"新课纲LVC-24","goal":"【人文社科知识】 《我是白痴》前 15 章；《我不想上学了》 【思辨思维工具】 1）破解标题（阅读手册） 2）4F 思考（阅读手册、课件） 3）用故事情节佐证观点；想象人物心理活动 【核心能力品质】 沟通与合作、尊重他人的意识以及与不同人进行社会交往的能力 【表达手法技能】暂无 【认知突破点】 原有…","tasks":"【阅读策略】4F 思考 【丁同妈妈的意见书】所有人都应该被尊重吗？（重要） 进一步思考：每个人不尊重比自己差的人，生活会变得怎么 样？ 【林佳音的信】林佳音为彭铁男做过什么；人物内心 OS 分析； 更加理想的尊重方式是怎样的？ 【情景故事】…"},{"id":"142","name":"《我是白痴》下：世界上最聪明的人？","pkg":"新课纲LVC-25","goal":"【人文社科知识】 《我是白痴》 【思辨思维工具】 关注人物盲点（阅读手册、课件） 【核心能力品质】 学会学习与终身学习、人生规划与幸福生活、自我发展的意识以 及核心价值的选择能力 【表达手法技能】暂无 【认知突破点】 原有认知：聪明就是高智商，聪明人就是聪明，蠢人就是蠢； 认知突破：聪明可以是高智商…","tasks":"【阅读策略】关注人物盲点 【怎样算是聪明】举一个你所知道的聪明人的例子；概括我们 平时所说的聪明 【故事阅读】知道自己什么都不懂算不算聪明 【思想实验】你会不会吃下聪明豆？ 【情景讨论】你同意聪明人更不容易幸福这个观点吗（重点） 【课后拓展…"}]}]},{"grade":"S6 · 四年级下","sem":"S6","units":[{"unit":"逻辑与表达","lessons":[{"id":"148","name":"我叫杰克逊（上）","pkg":"LC春季-09","goal":"1.人文社科知识：忒修斯之船。 2. 思维工具：确立标准，在做出判断或决定时，先 考虑清楚标准，你的立场会更清晰、明确。 3.写作技巧：安慰劝诫。 4.认知升级：人类的定义和边界。","tasks":"1. 布鲁克的新人生 2081 年。 2. 布鲁克的新人生 2181 年。 3. 模拟法庭辩论：打劫画廊的罪犯辩论。 4. 反思回顾。 核心问题 1. 布鲁克要不要把大脑置换成电脑？ 2. 打劫画廊的罪犯是否是同一个人？应该受到惩罚 吗？ …"}]},{"unit":"认识世界","lessons":[{"id":"158","name":"神话故事都是怎么来的？","pkg":"LC春季-18","goal":"【阅读策略技能】 1）读前已知回顾（阅读手册） 2）故事编码和解码（阅读手册、课件） 3）寻找故事异同（课件） 【思维认知突破】 原有认知：神话都是些比较假大空的编出来的故事。 认知突破：神话有历史价值和精神价值，能够帮助我们 理解人类社会“童年时期”的样貌和世界观，也是民族 精神的重要载体。 【底…","tasks":"【问题讨论】神话何来？（重要） 【游戏】猜测神话人物（重要） 【任务】精卫填海、夸父追日、愚公移山三则神话的 异同概括 【辩论】知其不可为而不为，还是知其不可为而为之？ （重要） 背景知识 《袁珂中国神话故事集·美绘本·开天辟地卷》 课节"},{"id":"159","name":"当混蛋开始拯救世界","pkg":"LC春季-19","goal":"【阅读策略技能】 1）章节分类（阅读手册、课件） 【思维认知突破】 原有认知：英雄人物强大、完美、成就高。 认知突破：1）英雄人物并非必须强大，强大的人物并非 都是英雄；2）人无完人，英雄也有自身的缺点；3）英 雄人物成就的背后，是面对失去和代价的抉择。 【底层核心素养】 人文与社会素养/公民责任与…","tasks":"【任务】写一份英雄简历+其他英雄悲剧故事 【问题讨论】什么样的代价让你愿意承受做英雄？什 么样的代价会放弃？（重要） 【问题讨论】英雄人物有什么共同点？ 【问题讨论】汉考克是英雄吗？应该被赶走吗？（重 要） 【问题讨论】作为有强大能力的人，…"},{"id":"160","name":"战神的游戏","pkg":"LC春季-20","goal":"【阅读策略技能】 1）绘制人物图谱（阅读手册、课件） 2）利用目录页快速检索（阅读手册） 【思维认知突破】 原有认知：战争是可怕的，但人类一直在打仗，战争也 是很正常的； 认知突破：战争确实可怕，但战争有时候让人觉得必要， 其中重要的是“争”而不是“战”，我们可以探索 “战”之外解决问题的办法。 【…","tasks":"【问题讨论】本卷的特点和主题关键词 【任务】抽选身份，讨论是否要放弃战争权（重要） 【问题讨论】战争有哪些利弊？（重要） 【问题讨论】没有战争、永远和平的世界是否能实现？ 【问题讨论】以武力强弱决定谁说了算是否合理？（重 要） 【任务】战神…"}]},{"unit":"思维与创造","lessons":[{"id":"145","name":"一定要去学校吗？","pkg":"新课纲LVC-13","goal":"【人文社科知识】 【文学】日本国民儿童文学作品《窗边的小豆豆》； 【社会学】对学校传统意义的颠覆 【思辨思维工具】 目标定位法：要讨论一件事情是否有必要，可以先看这 件事的目标是什么，再把可能的方法列出来做比较，进 而判断这件事到底是不是必须。 【核心能力品质】 探究精神、想象力、学习与自我发展的意…","tasks":"【问题讨论】无忧无虑国的孩子，还有什么必要去上 学呢？（重要） 【问题讨论】一个人在走上社会之前，必须要学习吗？ 必须学到哪些知识和能力？ 【任务】通过哪些途径和方式可以获得“学习”？给 你认识到的“学习”分分类，并在图表上填一填。 【问题…"},{"id":"146","name":"好老师VS坏老师","pkg":"新课纲LVC-06","goal":"【人文社科知识】 【哲学】马里兰社会实验；荒诞主义；人的异 化；魔幻现实主义；个人利益和群体利益的权 衡；生活陌生化实践 【思辨思维工具】 换位思考、辩证思考 【核心能力与品质】 公正、社交能力 【表达手法与技能】 想象——矛盾变化","tasks":"及 核心问题 【引入】课前阅读回顾 【问题讨论】现实生活的班级里老师会怎么惩罚？惩罚能 不能接受的标准是什么？ 【辩论】要不要执行变苹果术（重要） 【问题讨论】你愿意变成兔子吗？（重要） 【问题讨论】生活中当惩罚来临你会不会立刻接受？如果 …"}]},{"unit":"社会意识","lessons":[{"id":"161","name":"权力会让你变讨厌鬼吗？","pkg":"新课纲LVC-16","goal":"1.人文社科知识：儒家对“为政”的看法。 2. 思维工具：正反思维，找出事物的正反两面并进行 比较，能够帮助我们更好地做出判断。 3.写作技巧：第一人称自述。 4.认知升级：事物的两面性；规则的制定。","tasks":"1.阅读思考：《光屁股大犀牛》； 2.思想实验：你愿意拥有神奇的王冠吗？谁来决定王 冠给谁？ 3.情景讨论：怎样的人能成为班长？班长是否可以制 定规则？ 4.认知升级 核心问题 1.拥有王冠的好处和坏处？ 2.班长是否可以自己制定规则？ 背…"},{"id":"162","name":"人人有柄公平秤","pkg":"新课纲LVC-07","goal":"1.人文社科知识：马粪争夺案。 2.思维工具：相关人群分析法，通过分析社会事件中 涉及到的人群，给人群分类来尝试解决问题。 3.写作技巧：提案写作。 4.认知升级：没有绝对的公平，只有相对的公平。","tasks":"1.课前阅读《仲裁者》读后思考； 2.圆桌会议：该把书送给谁？谁来决定？ 3.反思总结：怎样分配才公平？ 4.模拟法庭：马粪争夺案。 核心问题 1.该把书送给谁？谁来决定？ 2.马粪判给谁？村子会有怎样不同的发展？ 背景知识 马粪争夺案：h…"}]},{"unit":"环境和自我理解","lessons":[{"id":"151","name":"以爱之名","pkg":"新课纲LVC-15","goal":"1.人文社科知识：圣经/弗洛姆对爱的理解。 2. 思维工具：定点思考法，通过定点法，学会对比较 类的问题进行有逻辑的思考。 3.写作技巧：人物“特色”描写。 4.认知升级：理解爱的实践。","tasks":"1. 阅读思考：《活了一百万次的猫》。 2. 思想实验：爱是什么样子的？ 3. 辩论时刻：爱与被爱哪个更幸福？ 核心问题 1. 爱的体现是？ 2. 爱与被爱哪个更幸福？ 背景知识 2003 国际大专辩论赛 爱与被爱哪个更幸福 https:/…"}]},{"unit":"语言学启蒙","lessons":[{"id":"163","name":"语言之神的选召","pkg":"新课纲LVC-19","goal":"1.人文社科知识：仓颉造字。 2. 思维工具：迁移验证法，找到几种可能性，然后迁 移到不同场景中进行验证。 3.写作技巧：创意设计。 4.认知升级：语言最重要的目的是“表意”。","tasks":"1.翻译虫语：《哆悉哒》； 2.模拟游戏：部落侦查员； 3.游戏思考； 4.模拟游戏：造字； 5.小辩论：使用表情包是退化还是进步？ 核心问题 1.哪些可以被称作“语言”？哪些不能算作“语言”？ 2.使用表情包是退化还是进步？ 背景知识 文…"},{"id":"164","name":"语言之神的测试","pkg":"新课纲LVC-20","goal":"1.人文社科知识：gavagai思想实验。 2. 思维工具：目标思考法，判断一件事情可以或者不 可以，必须要看做这件事的目标到底是什么。如果不 能达成目标，也许就是不可以的。 3. 写作技巧：创意设计；方言词典编写。 4.认知升级：离开了交流，语言没有意义。","tasks":"1.故事讨论：有没有可能发明一种只属于你自己的语 言？ 2.实战任务：语言翻译官； 3.思想实验：如何确定陌生词语的意思； 4.方言体验：有没有必要挽救方言？ 核心问题 1.有没有可能发明一种只属于你自己的语言？ 2.在语言翻译中，如何确定…"},{"id":"165","name":"语言之神的无奈","pkg":"新课纲LVC-21","goal":"1.人文社科知识：轮扁斫轮的故事。 2. 思维工具：排除法，在选项较多的情况下，试着把 关键点总结提炼出来，然后对照选项，逐一排除，直 至找出标准答案。 3.写作技巧：爱的表现方式。 4.认知升级：语言的极限。","tasks":"1.游戏体验：你说我猜； 2.故事探讨：轮扁斫轮； 3.思想实验：语言王国的疆域 核心问题 1.语言能把我们全部的思想都完整地表达出来吗？ 2.口头语言和书面语言，哪个更能促进文明的发展？ 背景知识 为什么说“语言的界限就是思想的界限”？ …"}]}]},{"grade":"A1 · 进阶一","sem":"A1","units":[{"unit":"人际关系与情绪","lessons":[{"id":"179","name":"交朋友需要考虑利益吗？","pkg":"LC春季-01","goal":"人文社科知识：亚里士多德对不同朋友的区分和评判 思维工具：定义思考法-下定义与举反例；观点-理由 -例子的基本框架 写作技巧：定义+理由+观点/例子的写作/说理技巧 认知升级：人成长的三个阶段；亚里士多德对于朋友 的分类","tasks":"1.人是不是必须有朋友？介绍朋友的必要性 2.泰迪是否是朋友？介绍成为朋友的标准。 3.介绍亚里士多德友情的标准，并且能举出反例 4.交朋友，需要在乎利益吗？综合运用思维方法。 核心问题 1.我们是否需要朋友朋友？ 2.如果需要，如何才算是…"},{"id":"180","name":"自由，是你孤独地站立","pkg":"新课纲LVD-10","goal":"【认知突破】 原有认知：孤独是一种很让人难受的负面状态； 认知突破：孤独不一定是负面的，人可以选择积极独处，用这 样的时光做有价值的的事情。 【思维方法】 辩证思维，多角度思考，下定义 【人文社科知识】 【哲学】如何与孤独相处 【社会学】互联网下的孤独感 【艺术】《渴望生活——梵高传》","tasks":"1. 荒岛与文明社会哪一个是孤独？（小讨论） 2. 孤独的感受和定义（大讨论） 3. 互联网能否排解孤独？（小讨论） 4. 艺术家与孤独（小讨论） 5. 孤独的意义与方法（大讨论） 背景知识 1.为什么互联网越来越发达、沟通越来越容易，人们…"}]},{"unit":"善恶与道德","lessons":[{"id":"169","name":"好人？坏人？（上）","pkg":"LC春季-02","goal":"Ø 人文社科知识：结果论/义务论以及孔子对行为好坏的评判标准 Ø 思维工具：定义思考法-标准提炼。通过找出区分事物的标准， 增进对某一概念的理解。 Ø 写作技巧：齐头并进和背道而驰的说理方法（创作宝典）. Ø 认知升级：学会从多个维度出发进行道德评判，形成自己的道德 评判标准，并能够对自己的道德标准…","tasks":"1. 举出善恶的示例，提炼善恶的标准。 2. 讨论戴立克和灭霸的好坏。 3. 讨论子贡赎人的故事。 4. 理解善恶的复杂性。 大讨论（核 心讨论） 1. 你觉得善恶的标准是什么？ 2. 你觉得戴立克/灭霸做的对吗？ 3. 人们为什么会对一个…"},{"id":"172","name":"道德的影子","pkg":"LC春季-12","goal":"【认知升级】 1-公序良俗的清晰定义 2-打破公序良俗非好即坏，或者渴望抽取出判断标准 的【二元认知/张嘴就来的辩证看待】 【语言表达及思维能力】 下清晰、具体的定义","tasks":"及 核心问题 上半节课 【核心讨论】让你儿子穿裙子吗 【延伸讨论】公序良俗的定义及对比分析 【延伸讨论】公序良俗是否存在或者是否可以随便冒犯 （很小很小的问题）冒犯公序良俗的后果 下半节课 【问题讨论】伊朗女性戴头巾，是否属于公序良俗 【小…"}]},{"unit":"思维：逻辑推理","lessons":[{"id":"173","name":"小小福尔摩斯（上）无人的卧室","pkg":"LC春季-05","goal":"【认知升级】 区别真正的演绎推理和侦探作品中的演绎推理 【思考工具】 演绎推理法-在已有条件下穷尽假设，验证假设，找到 真相","tasks":"及 核心问题 【一轮搜证】根据现场搜证，做出假设 【二轮搜证】验证假设，寻找新证据 破题视频 标题页 白色小字气氛组，老师可以 绘声绘色念一下，悬疑感起 案件概述 老师拿腔拿调念，着重强 调：是每个人晚上都看见 小花睡着了的 证据页 ⚠️ …"},{"id":"174","name":"小小福尔摩斯（中）字条追凶","pkg":"LC春季-06","goal":"【认知升级】 字迹学初接触 典型性思维与基础比率两种思维并不存在鄙视层级 反侦察是在干嘛 公诉期的社会意义和创立初衷是什么 【思考工具】 庖丁解牛思考法-当我们观察一个东西的时候，拆开看 ，其实分别在观察什么（工具老师不要太在意）","tasks":"及 核心问题 上半节课 【笔记观察】嫌疑人形象侧写 【核心讨论】典型性思维与基础比率的比较 下半节课 【住所画圈】进一步缩小范围，推理嫌疑人可能住地 【核心讨论】现实里的当年，公诉期的利与弊 破题视频 和上节课联动，标题页 白色小字气氛组，…"},{"id":"175","name":"小小福尔摩斯（下）逻辑保卫战","pkg":"LC春季-07","goal":"【通识】 受害者有罪论和逻辑滑坡谬误。 【认知突破】 原有认知：在一起纠纷中，每个人都应该承担相应的 后果，大家都有错，也得在自己的身上找找原因。 认知突破：以上认知可能陷入了“受害者有罪论”的 误区，这是一种逻辑谬误，问题在于过度迷信新国关 系。 原有认知：通过因果关系推出的结论一定是正确的。 认…","tasks":"核心问题 1.流体熊的倒塌该怨谁 (1)小讨论：你觉得流体熊的倒塌是谁的错？ (2)小讨论：受害者有罪论的问题出在哪里？人们为 什么会在受害者身上找原因？ (3)小讨论：受害者有罪论对于个人和社会分别会造 成什么影响？ 2.竟敢冤枉大佬 (…"}]},{"unit":"认识自我与接纳","lessons":[{"id":"176","name":"新时代女娲造人（上）完美人类计划","pkg":"LC春季-10","goal":"➢ 人文社科知识： 完美主义及其利弊 基因伦理 ➢ 思维工具： ◼ 多角度思考 – 由点到面 通过“由点到面，从个体到社会”的框架 思考复杂问题 ➢ 认知升级：认识到追求完美所可能带来的困 境，对完美主义形成一个恰当的认知。","tasks":"1. 通过“造物者的任务”让学生对完美的个人以及由完美的个人组成的社会进行想象和探 讨。 2. 通过“基因编辑”的故事，让学生们思考基因伦理的相关问题，讨论基因编辑会给社会带 来怎样的影响以及人们是否应该使用基因编辑技术等问题。 核心 问题…"},{"id":"177","name":"新时代女娲造人（中）","pkg":"LC春季-11","goal":"➢ 人文社科知识：如何更好地进行沟通 ➢ 思维工具： ◼ 批判思考法 – 冰山原则 面对复杂问题不能着急下判断，记得提醒 自己：这就是事情的全貌吗？ 有没有别的 可能吗？ ➢ 认知升级：在遇到家庭矛盾的时候学会非暴力 沟通。","tasks":"1. 分享对自己父母的期望以及父母的实际表现。 2. 辩论严苛型和呵护型哪种教育更好。 3. 通过“父母沟通圆桌会”学会用非暴力沟通法解决和家长的冲突。 核心 问题 1. 我对爸爸妈妈的期望是怎样的？实际情况如何？（大讨论） 2. 严苛型和…"}]},{"unit":"社会学启蒙：群体与社会参与","lessons":[{"id":"182","name":"公鸡打鸣算外语吗？","pkg":"LC春季-13","goal":"• 知识目标： 1.人类语言与动物语言的区别。 2.人类语言的独特性。 3.语言与思维、文化和文明的关系 4.辩证性看待语言的发展与创新 • 思维工具箱：对比思维，情境思考","tasks":"1.讨论动物语言与人类语言的区别，探讨语言的狭义 与广义。 2.体会当代人类语言的独特性所在。 3.语言与思维、文化与文明之间的关系 4.比较文言文与白话文，辩证性看待语言的发展创新 核心问题 辩论-只有人类才有语言吗？（辩论） 你支持语言…"},{"id":"183","name":"利人者，人恒利之","pkg":"新课纲LVD-04","goal":"➢ 人文社科知识：人与人/社会间的关系 ➢ 思维工具： ◼ 系统思考法 – 发现问题本质 通过挖掘表层问题背后的原因，发现核心 矛盾，从而更好地解决问题。 ➢ 认知升级：意识到帮助他人的必要性","tasks":"1. 通过《不是我的错》这个绘本的讨论让学生初步认识到 “不作为也是有错的”。 2. 通过《我没有说话》让学生思考，如果帮助他人有风险，是否还应该帮助他人？ 3. 通过《石头人》这个视频，创设出一个“利他”会造成对自己更大伤害的情境，让学生…"}]},{"unit":"阅读与写作","lessons":[{"id":"189","name":"《深夜小狗》上：星星上的人","pkg":"LC春季-23","goal":"【认知升级】 1-特殊教育与融合教育的利弊 2-“特殊”帮助准则（坐标图）","tasks":"及 核心问题 上半节课 【阅读检测卡】阿弗一些场景下的具体表现和想法 【延伸讨论】阿弗，够不够特殊？ 【投票】是否赞成阿弗去钻石星 【核心讨论】特殊教育VS融合教育 下半节课 【核心讨论】“我”也要特殊对待～！！ 【课堂练习】坐标轴实战 【…"},{"id":"190","name":"《深夜小狗》下：责任的重量","pkg":"LC春季-24","goal":"【认知升级】 1-自我负责和对他人负责什么时候真的产生了冲突 2-哪些时候我想摆脱责任的时候可以摆脱，以什么方 式摆脱 3-对公众负责，承担与自己无直接关系的大众责任 的 意义","tasks":"及 核心问题 上半节课 【阅读检测卡】阿弗妈妈人生关键节点所做的选择 【延伸讨论】如果你是她，你的选择（离开阿弗，是不 负责任吗？） 【问题讨论】天降猫咪 下半节课 【核心讨论】无理乘客 【问题整理】负责任的边界、是否负责的区分 【问题讨论…"}]}]},{"grade":"A2 · 进阶二","sem":"A2","units":[{"unit":"爱与利他精神","lessons":[{"id":"202","name":"你觉得你有爱心吗？","pkg":"LC春季-03","goal":"➢ 人文社科知识：对经典道德问题的讨论，哲人对爱的理解 ➢ 思维工具： ◼ 实验思考法 – 控制变量 通过对比在不同情景下的选择，分析选择背后影响决策的深 层次因素。 ➢ 认知升级：理解爱的实践，了解利己与利他","tasks":"1. 讨论在爱的过程中，感性和理性的重要程度（大讨论）。 2. 让学生意识到在爱的实践中，我们会考虑爱的成本和爱的远近 （小讨论）。 3. 你如何看待邀请大山孩子到城市居住这一行动？它是好事吗？ （课中视频《大山深处》）（大讨论或辩论） 4…"}]},{"unit":"价值判断与偏见","lessons":[{"id":"199","name":"穿越星空的抉择","pkg":"LC春季-04","goal":"【通识】 探索太空的意义与人类思维的局限性。 【认知突破】 原有认知：探索宇宙对未来很有用处，还可以增加民 族自豪感。 认知突破：探索太空会对当代社会各个行业产生价 值，比如赈灾和医疗领域。 原有认知： 人类以各个行业想要实现的具体目标为准， 依然可以达到很多技术突破。 认知突破：人类思维的局限性，…","tasks":"核心问题 1.头顶星空，眼下难民 (1)全员讨论：探索宇宙太空，还是帮助贫困小孩完 善基础设施？ 2.星球移民仓 (1)全员讨论：要不要把票留给宠物和艺术品？ (2)全员讨论：你选择救布偶猫还是救《蒙娜丽 莎》？ 3.移民仓里的故事 (1)…"}]},{"unit":"哲学启蒙：求真与共情","lessons":[{"id":"196","name":"贾真的世界（上）","pkg":"新课纲LVD-01","goal":"➢ 人文社科知识：外部世界怀疑论；笛卡尔的怀疑方法 ➢ 思维工具： ◼ 批判思考法 – 寻找理由的理由 通过追问理由背后的理由，辨别理由的好坏。 ➢ 认知升级：理解真实和虚假，学会科学的怀疑精神。","tasks":"1. 讨论能否确认自己不是在做梦，思考梦境和现实的区分。 2. 理解庄周梦蝶的故事以及背后的文学意象。 3. 理解笛卡尔的怀疑方法，学会通过寻找理由背后的理由，批判地看待身边 的观点。 4. 讨论黑客帝国中的“红蓝药丸之选”，讨论真实之于美…"},{"id":"197","name":"贾真的世界（下）","pkg":"新课纲LVD-02","goal":"➢ 人文社科知识：探索真理的途径，维特根斯坦的语言游戏，科学 真理的意义 ➢ 思维工具： ◼ 抽象思考法 – 情景联系 通过设想抽象概念的使用情景，理解这一概念的意义。","tasks":"1.第一部分：虚构作品的真。 《很高兴我不是真的》以及《海的女儿》 2.第二部分：语言使用的真。 “真”这个词语可以使用在哪些情境，分别代表什么意思？ 3.第三部分：科学知识的真。 地球的历史是真的吗？ 核心问题 1. 《很高兴我不是真的》…"},{"id":"198","name":"谁痛苦我的痛苦？","pkg":"新课纲LVD-03","goal":"➢ 人文社科知识：濠梁之辩、他心问题、哲学行为主义、颠倒色谱 ➢ 思维工具： ◼ 批判思考法 – 寻找理由的漏洞 通过挖掘理由的漏洞，辨别理由的好坏，培养自己的批判思 维。 ➢ 认知升级：意识到要了解别人的内心的困难所在，从而明白设身 处地与换位思考的必要性。","tasks":"1. 通过濠梁之辩初步探讨我们应该如何知道鱼的感受。 2. 通过新濠梁之辩介绍当代哲学家对他心问题的看法。 3. 讨论“能否知道别人吃巧克力的感受”这个话题，意识到要了解 他人内心其实非常困难，并通过讨论引入“寻找理由的漏洞”这 一批判思考…"}]},{"unit":"社会与生存智慧","lessons":[{"id":"207","name":"勇者之道","pkg":"新课纲LVD-06","goal":"| 人文社科知识： 中国儒家与西方亚里士多德对于“小勇”与“大勇”的论述。 古希腊的中道思想 思维工具箱： 对比法提炼关键要素 原有认知：勇敢是勇往直前不害怕； 认知突破：理解勇敢的多种内涵，勇敢不一定是不害怕，而是战胜恐惧做正确有意义的事情；能够了解小勇和大勇的区别。 |","tasks":"| 1.你看过哪些跟探险有关的书（或者电影），印象最深刻的是哪一本？为什么印象深刻？（小讨论） 2.你怎么看待徒手攀岩？（辩论） 3.列举一个勇敢行为和鲁莽行为的例子； 你觉得什么叫“勇敢”？一个行为，要称得上勇敢，必须具备哪些要素？（合起…"},{"id":"208","name":"我们可以拥有什么？","pkg":"新课纲LVD-16","goal":"【人文社科】 法律：所有权标准； 哲学与社会学：自然状态到政府状态 【思维技能】 多角度道德推理 从法律和道德思考问题 【认知突破】 所有权的产生和划分规则很大程度上是人为的，这其 中有很多的细节问题需要考虑，以避免冲突与争端的 产生。","tasks":"你认为，女王能拥有天空吗？（辩论） 奥格可以拥有这块土地吗？（辩论） 印第安族群，形成了类似“所有权”的观念。这是一 件好事，还是一件坏事？（小讨论） 日耳曼人可以拥有这片土地吗？为什么？（小讨论） 背景知识 所有权（私有财产）的标准： •…"},{"id":"209","name":"一诺值千金吗？","pkg":"新课纲LVD-19","goal":"】 知识目标： 技能目标：辩证分析、换位思考 情感&价值观目标：让孩子认识尊重是守信的内核 PPT 任务解读 背景分析&学生观点分析 引导技巧 课前通过小视频学完两篇古文的文言 支持，上传朗读音频以及完成课前预习 作业（鲸打卡） 一、导入课题 课前热身小调查 【引导】  简单做个投票  可以让选…","tasks":""},{"id":"210","name":"忠言如何不逆耳","pkg":"新课纲LVD-21","goal":"】  人文社科知识：《何充直言不讳》、古代谏官制度、《谏院题名记》、海瑞生平  思辨思维工具：多标准提炼  表达手法技能：点评  核心能力品质：辩证思 直言不讳为勇也？ 维 课节","tasks":""}]},{"unit":"终极道德困境","lessons":[{"id":"211","name":"天空不会回答","pkg":"新课纲LVD-08","goal":"【人文社科知识】： 【心理学】马斯洛需求理论 【文学】古文《孟子·告子上》、《鱼我所欲也》 【历史】苏格拉底之死、韩信“胯下之辱” 【认知突破】： 原有认知：面对选择，孩子有时候会回避核心问题， 选择中立； 认知突破：在现实中，很多情况下我们不能回避做选 择，逃避本身也是一种选择，不如正视选择；很多…","tasks":"1. 为什么做选择会这么困难？人为什么不喜欢做选 择呢？（小讨论） 2. 你认同马斯诺需求理论的解读吗？（大讨论/辩 论） 3. 你会将把所有的水都拿出来救这个发烧的队友 吗？为什么？（大讨论/辩论） 4. 如果你不是队长，而是发烧的队友，…"},{"id":"212","name":"大海不会回答","pkg":"新课纲LVD-09","goal":"【人文社科知识】 【哲学】孔孟的人性“性善论”与荀子的“性恶论” 【法律】杜德利案与紧急避险的概念 【核心价值品质】 多角度思考、共情能力、价值判断、热爱生命 原有认知：人之所以为人，是要遵守道德的； 认知突破：人的内心存在人性与兽性，这是正常的，但人性的 那一面是更值得坚守的。 【思维技能】 辩证…","tasks":"1.杜德利等人是否有罪？（辩论） 2. 杜德利案是法条至上还是优先考虑多数民众的舆 论意见？（小讨论或辩论） 3.少年派两段故事的梳理（第一段小讨论；第二段可 选，1-2 同学） 4.什么是人性与兽性？两者关系什么？（大讨论） 背景知识 1…"}]}]},{"grade":"A3 · 进阶三","sem":"A3","units":[{"unit":"群体中的自我","lessons":[{"id":"218","name":"乌合之众","pkg":"新课纲LVD-05","goal":"➢ 人文社科知识： 人与人/社会间的关系； 从众心理； 平庸之恶，纳粹极权兴起的根源。 ➢ 思维工具： ◼ 系统思考法 – 正反思维 通过分析事物的正反两面做出判断。 ➢ 认知升级：意识到集体主义的正反两面，认识 到保持独立道德思考的重要性。","tasks":"1. 在《卡夫卡变形记》与生活中“特立独行”和“保持一致”初步让学生思考个人与集体的 关系。 2. 通过《浪潮》让学生认识到集体主义好的一面和不好的一面 3. 通过艾希曼的故事让学生思考，为什么集体主义走向极端是不好的，以及之所以会产生问 …"}]},{"unit":"生命的意义与价值","lessons":[{"id":"231","name":"伙伴还是晚餐？","pkg":"新课纲LVD-07","goal":"人文知识： 彼得幸格的动物伦理学 中国思想中的人禽之别 技能目标：视角转换 情感价值观：意识到动物也有权利，更认真地思考对 待动物的方式和态度；思考人的生命价值。","tasks":"1.我们能不能吃动物？（大讨论） 2.外星人有权利随意吃人类吗？（大讨论） 3. 相对于其他动物，人有何特殊之处？根据这种特 殊之处，人应该被特殊对待吗？（大讨论） 背景知识 可以自行搜索：彼得幸格（Peter Singer）的动物伦理学 …"}]},{"unit":"思维：工具思维","lessons":[{"id":"223","name":"无限可能的未来","pkg":"新课纲LVD-14","goal":"【通识知识】 Ø 科幻作品中的未来类型 Ø 凡尔纳作品对未来的“预测” Ø 拉普拉斯妖与决定论 【思考工具】 / 【认知突破】 原有认知：认为未来是否注定是一个有确定答案的问 题；我们能够预测到未来的时候，应该好好准备，不能 预测的时候，就交给命运决定吧； 认知突破：未来是否是注定的没有确切的答案，…","tasks":"（第一课时） 【问题交流】对未来的想象 【问题讨论】未来可被预测吗？ 【游戏】有可能的故事 （第二课时） 【问题讨论】出生是纯粹的巧合吗？ 【活动+问题讨论】扔硬币的结果是随机事件吗？ 【操作+问题讨论】如何面对模糊未来 【课节收尾】总结、…"},{"id":"224","name":"寸金难买寸光阴","pkg":"新课纲LVD-15","goal":"➢ 人文社科知识：时间与金钱的关系和价值。 ➢ 思维工具： ◼ 本课没有另外提供思维工具箱，学生可以 回顾之前的思维工具箱（如：多维思考 法：由点到面）来思考问题 ➢ 认知升级：理解感受时间的价值以及应当如何 使用时间","tasks":"1.时间是不是金钱？（大讨论） 2.小孩子的时间是一文不值的吗?（小讨论） 3.学生学习应该得到工资吗？（小讨论） 4.你是否愿意储蓄时间？（大讨论） 5..弗西先生应该储蓄时间吗？如果所有人都储蓄时间，社会将变得怎样？（小讨论） 背景知识…"}]},{"unit":"公平与权利初探","lessons":[{"id":"221","name":"这是我应得的吗？","pkg":"新课纲LVD-17","goal":"【通识】 进入世界名校的方式方法 桑德尔《精英的傲慢》 上野千鹤子在东京大学上的演讲 【认知突破】 我们的成功，除了我们自己的努力之外，还有很多看 不见的因素在助力着","tasks":"1. 通过情景体验来带入思考富人阶层是如何把金钱转化为子女的教育资源的并分析思考这样 做的目的 2. 通过推演分析社会上普遍存在的绩优制思想可能产生的问题 核心 问题 通过推演分析社会上普遍存在的绩优制思想可能产生的问题 背景知识 破课视频…"},{"id":"222","name":"消失的人","pkg":"新课纲LVD-18","goal":"【通识】 国际贫困线的标准和贫困的不同定义 世界贫困人口数量 纳克斯（美国经济学家）的贫穷陷阱理论 社会达尔文理论 我国扶贫成果 张桂梅的女子高中 【认知突破】 之前大家会觉得，穷人就是因为他不努力，如果努力， 就可以改变自身的处境，穷人这个群体，只要我们好 好学习，考上好大学找到好工作就和我们没有…","tasks":"1. 通过情景体验理解贫困陷阱和相关问题 2. 辨析达尔文主义的先进性和局限性 核心 问题 通过情景体验理解贫困陷阱和相关问题 背景知识 关键词：《贫穷的本质》 《北京折叠》 福利社会 破课视频 课节"}]},{"unit":"阅读与写作","lessons":[{"id":"237","name":"《像自由一样美丽》上：集中营里的画笔","pkg":"新课纲LVD-24","goal":"| 【通识】 艺术史：现实主义VS超现实主义 美学：艺术的目的 哲学：艺术的价值与意义 【认知突破】 从原本只觉得艺术对人是重要的，到能够对于艺术的不同价值和目的有深入的了解。例如艺术对人心灵的净化作用具体体现在哪里。 【阅读策略】 归纳与延伸：能够总结书中重点内容，并且用自己话来归纳 |","tasks":"核心问题 | 1.阅读检测卡和画作的可选讨论 2.特莱津之秘 （1）小讨论：孩子遇到的困难为何，如何帮助？ （2）重点辩论：目前情况下，是否应该给孩子绘画教学？ （3）小讨论：你会教孩子以何种风格为主来绘画？ 3.美，往何处去（合起来大讨论…"},{"id":"238","name":"《像自由一样美丽》下：我们与恶的距离","pkg":"新课纲LVD-25","goal":"| 【哲学】 论恶的哲学；判断恶的标准，认识到恶既有人性因素，也有社会根源，特别是恶的行为未必就是由特别罪大恶极的人所做的，很可能是平庸的。 【思维】 提炼标准，由点到面的思考法；概念的拆解和分析 |","tasks":"核心问题 | 1.阅读检测卡：纳粹的恶（课前小讨论） 2.恶的例子和类型（快速全员） 3.邪恶飞行员（两个小讨论） 4.思想实验：要不要继续（投票、小讨论） 5.李晓明新闻剖析（核心讨论） 6.总结反思：纳粹恶的根源（可选讨论） 背景知识 …"}]}]},{"grade":"A4 · 进阶四","sem":"A4","units":[{"unit":"思维：抽象逻辑","lessons":[{"id":"242","name":"时间的痕迹","pkg":"新课纲LVD-11","goal":"➢ 人文社科知识：时间的本质 ➢ 思维工具： ◼ 抽象思考法 – 具象思维 通过想象对于某一抽象事物的具体感受并 从中概括其共性，进而理解抽象概念。 ◼ 抽象思考法 – 情景联想 通过设想抽象概念的使用情景，理解这一 概念的意义。 ➢ 认知升级：思考时间的本质","tasks":"1. 你从哪里感知到时间的存在？每人举出一个例子。（大讨论） 2. 给时间下定义（小讨论） 3. 小黑板画出过去现在和未来，并且解释（小讨论） 4. 过去现在未来哪个更重要（大讨论） 5. 感受时间冻结（小讨论） 背景知识 视频：《降临》的…"},{"id":"243","name":"当我穿越时空","pkg":"新课纲LVD-13","goal":"➢ 人文社科知识：时空旅行、祖父悖论 ➢ 思维工具： ◼ 系统思考法 – 因果推理 通过绘制因果推理的思维导图，梳理事物 发展的逻辑线索。 ➢ 认知升级：思考时空悖论的解决方法","tasks":"1. 世界上有没有时光机：睡眠是不是时光机？（大讨论） 2.你能解释赫伯特为何不存在吗？（小讨论） 3. 有什么办法可以解决悖论吗？（小讨论） 4. 使用时光穿越修改历史是好事吗？（大讨论） 背景知识 破课视频 课节"}]}]},{"grade":"A5 · 进阶五","sem":"A5","units":[{"unit":"未分类","lessons":[{"id":"275","name":"《洞》上：谁在塑造我们？","pkg":"新课纲LVD-22","goal":"【通识知识】 米歇尔·福柯《规训与惩罚》 【思考工具】 / 【认知突破】","tasks":"（第一课时） 【问题讨论】翠湖营挖洞能让男孩变好吗？ 【问题讨论】翠湖营和学校有什么异同？ 【脑暴设计】翠湖实验学校的管理设计 原有认知：规训就是一种规则，我们遵从规则没什么不 好的； 认知突破：规训与规则最大的不同，在于它的隐蔽和无 限度…"},{"id":"276","name":"《洞》下：谁该为历史买单？","pkg":"新课纲LVD-23","goal":"【通识知识】 集体身份的意义 【思考工具】 / 【认知突破】 原有认知：祖先的过错、集体的问题，这些东西跟我没 有关系； 认知突破：家族、集体、国家的历史为个人赋予一种集 体身份，成为个人生活的一部分，也意味着一定的（有 限度的）责任。","tasks":"（第一课时） 【问题讨论】斯坦利经历和祖先选择是否有关？ 【问题讨论】需要替祖先过错承担责任吗？如果有具 体的利益关系，要不要负责？ （第二课时） 【问题讨论】是否赞同政府补偿要求？ 【问题讨论】为什么会羞愧？ 【思想实验】没有身份的国度会…"}]}]}];
+
+// 家长转译器：独立模型，可单独调试
+var TRANS={
+ name:"家长转译器（专治不会说话(˶◕؎◕˶)）",
+ ver:"v0.1 待调试",
+ prompt:"你是给家长写反馈的转译器。输入是老师确认过的内部学情总结，输出是给家长看的一段话。\n硬规则：\n1 不出现 Level、L1-L8、D1-D8、「高于/低于/符合/置灰」等内部术语。\n2 不做孩子之间的横向比较，不排名。\n3 置灰（观察机会不足）不得写成短板。\n4 每条判断后面跟一句孩子的原话或具体行为，不空谈。\n5 不煽情、不夸大，不用「非常优秀」「进步巨大」这类词。\n6 结尾给一条家庭可做的事，不超过两句。\n7 全文不超过 400 字。",
+ map:[
+  ["D1 立场与开放","能不能听进别人的说法"],["D2 分析与推导","把一件事拆开讲清楚"],
+  ["D3 标准自觉","知道自己为什么这么判断"],["D4 例证能力","用例子支撑自己的说法"],
+  ["D5 收束与决断","最后能不能给出自己的结论"],["D6 互动回应","接得住别人的话"],
+  ["D7 概念迁移","把一个道理用到别的事上"],["D8 问题生成","能不能自己提出新问题"]
+ ]
+};
+
+// —— 示例板书（接入识别后由真实结果替换）——
+var ENTRIES={
+ "我叫杰克逊（上）":[
+  {who:"教师",topic:"什么决定「我还是我」",stage:"",tag:"板书原文·问句",dim:0,text:"这样换下去，杰克逊什么时候将变成完全不一样的自己？为什么？"},
+  {who:"教师",topic:"什么决定「我还是我」",stage:"",tag:"指令·观点+理由",dim:0,text:"结合对「存在」与「意义」的思考，思考2分钟，提出你的观点和理由。"},
+  {who:"涵涵",topic:"什么决定「我还是我」",stage:"框架前",tag:"",dim:0,text:"完全不一样指的就是一个人的认识、想法、判断和以前全部不一样。"},
+  {who:"若溪",topic:"什么决定「我还是我」",stage:"框架前",tag:"",dim:0,text:"还有外貌也是，这里不仅是看起来完全不一样，其次组成你身体的材料发生了改变，即便外表相同也叫完全不一样吧。"},
+  {who:"涵涵",topic:"什么决定「我还是我」",stage:"框架前",tag:"",dim:0,text:"我觉得还有就是别人对杰克逊的认识从某一形象和性格变成了另一种性格，也叫做完全不一样。"},
+  {who:"若溪",topic:"什么决定「我还是我」",stage:"框架前",tag:"",dim:0,text:"我觉得换掉大脑后，他就会变成完全不一样的自己，然后新的脑子不是他原本的那个，而我们的想法和记忆都在我们的大脑里面，所以换了大脑后，他就又要重新活一遍。但是如果环境没变，他的认识想法会不会和以前一样呢？有可能，所以想要变得完全不一样，还需要更换这个人的生活环境。"},
+  {who:"教师",topic:"什么决定「我还是我」",stage:"",tag:"卡片·补充事实",dim:0,text:"大脑置换手术会将你原有的记忆从你之前的大脑里全部移植出来，装到新的大脑里去。"},
+  {who:"教师",topic:"置换义体：换哪里、加什么功能",stage:"",tag:"板书原文·问句",dim:0,text:"如果允许你置换义体，你会置换你身体的哪个部分？你想给它添加怎样的功能？"},
+  {who:"嘟嘟",topic:"置换义体：换哪里、加什么功能",stage:"框架前",tag:"",dim:0,text:"是我的话，我想换我的整只手，这样可以让我的写字的速度很快，这样老师布置的作业很多的话，我就能很快完成，我还可以省出很多需要用手去做的事情，然后用这部分省下的时间去做其他有意义的事情。我还想让它具备伸长缩短的功能，这样我们玩很多游戏的时候，就可以帮助我们更方便地玩耍，比如捡球、捡够不着的玩具。"},
+  {who:"教师",topic:"换手臂之后还是同一个人吗",stage:"",tag:"板书原文·问句",dim:0,text:"更换手臂会让一个人变成完全不一样的自己吗？"},
+  {who:"涵涵",topic:"换手臂之后还是同一个人吗",stage:"框架前",tag:"",dim:0,text:"我觉得有一种情况就是你觉得你的手臂无非是多了一些功能，你可以好好地使用它们。但还有一种情况就是你会觉得自己的手臂很厉害，会很依赖这个高科技手臂，它影响了你的性格的一部分，甚至你还会想去更换其他的，产生这样的想法，所以最后你肯定会完全改变。"},
+  {who:"若溪",topic:"换手臂之后还是同一个人吗",stage:"框架前",tag:"",dim:0,text:"我觉得如果你在生气的时候，可能和别人打架玩的时候，如果你没有控制好，可能会攻击别人，别人或许会因此受到重伤。这样可能就会让你对自己产生厌恶，想要拆掉自己的手臂，或者伤害自己的行为，并且可能由此变得内向。"},
+  {who:"教师",topic:"你支不支持杰克逊",stage:"",tag:"板书原文·问句",dim:0,text:"如果你是哈利，你会支持杰克逊吗？"},
+  {who:"涵涵",topic:"你支不支持杰克逊",stage:"框架前",tag:"",dim:0,text:"我会支持杰克逊更换大脑，因为他如果更换了大脑，他作为一个好人，就可以帮助更多的人，这是一件有意义的事情。并且他如果换了大脑，记忆也会同步转移到新的大脑里面，对他也没有什么影响。"},
+  {who:"嘟嘟",topic:"你支不支持杰克逊",stage:"框架前",tag:"",dim:0,text:"我的看法是不太希望他去换，虽然可以换，但这个手术也是有风险的。虽然他的寿命延长了可以帮助更多的人，但是万一提取记忆的过程中出现了一些问题，或者手术出现了差错，他的思想发生了变化，本来是一个好人的杰克逊变成了坏人咋办？他现在毕竟身体都换成了机械的，他现在到底还是人类还是机器人呢？比如犯法了，法律处理人的方式去处理机器人就很不适合，比如坐牢这件事。他身上具备如此多危险的功能，万一失控就不好了。"},
+  {who:"教师",topic:"你支不支持杰克逊",stage:"",tag:"红字·教师追问",dim:0,text:"（提出了哪几个反驳点？）"},
+  {who:"嘟嘟",topic:"你支不支持杰克逊",stage:"框架前",tag:"",dim:0,text:"一、手术风险；二、术后不可控；三、法律和伦理问题；四、道德意识不确定是否存在。"},
+  {who:"若溪",topic:"你支不支持杰克逊",stage:"框架前",tag:"",dim:0,text:"如果他换了电子大脑后虽然活着，但他要是干坏事怎么办？再者就是如果有些人像杰克逊一样全都换了，但有些人只换了一部分，但也有人是什么都没有换的。换了的人更厉害，所以可能会去欺负普通人，比如抢他们的工作，这样就会带来社会上的不公平。而且这个时候法律还不好罚他们，万一全换了的人也说自己是个普通人呢？"},
+  {who:"教师",topic:"你支不支持杰克逊",stage:"",tag:"红字·教师批注",dim:0,text:"（身份、能力带来的多重矛盾）"},
+  {who:"涵涵",topic:"你支不支持杰克逊",stage:"框架前",tag:"",dim:0,text:"这种情况下普通人就会想自己也会想去比较，也想去换，但是置换手术需要很多钱。"},
+  {who:"教师",topic:"换了脑的杰克逊",stage:"",tag:"框架·短片",dim:0,text:"欣赏短片《什么决定我是我？》。你认为现在的杰克逊和之前的约翰还是一个人吗？"},
+  {who:"嘟嘟",topic:"换了脑的杰克逊",stage:"框架后",tag:"",dim:0,text:"我感觉他都不是一个人了，因为杰克逊之前的记忆力显示的约翰的经历是现在的杰克逊一定不会去做的行为，所以不是一个人。"},
+  {who:"教师",topic:"该不该惩罚他",stage:"",tag:"板书原文·问句",dim:0,text:"如今的杰克逊和之前的约翰还是一个人吗？他应该受到惩罚吗？如果要，需要受到什么样的惩罚呢？如果不要，你又会如何定义这次案件呢？"},
+  {who:"教师",topic:"该不该惩罚他",stage:"",tag:"板书原文·问句",dim:0,text:"法律去惩罚一个人的意义是什么？一、如果惩罚杰克逊能够带来什么意义？二、如果放过杰克逊会带来什么问题？"},
+  {who:"嘟嘟",topic:"该不该惩罚他",stage:"框架后",tag:"",dim:0,text:"我感觉不用过于去惩罚杰克逊，因为杰克逊已经改邪归正了，他现在每天都去做一些好事儿，这是可以抵消一部分他之前做的坏事儿的影响的。但如果惩罚杰克逊，反而会让杰克逊觉得特别的无辜，自己明明没有犯罪的经历，但是却被平白无故地抓了，这会导致他对法律产生厌恶。但是如果一些小偷听到了杰克逊的判刑结果，也效仿杰克逊，偷了东西后咽下失忆药水变成好人，从而换取减刑的机会。所以我觉得让杰克逊减刑是可以的。"},
+  {who:"教师",topic:"该不该惩罚他",stage:"",tag:"红字·教师追问",dim:0,text:"（改邪归正为什么就不需要被惩罚了？实质影响是什么？）"},
+  {who:"教师",topic:"该不该惩罚他",stage:"",tag:"板书原文·问句",dim:0,text:"一个人失忆了要不要对他失忆前的过错负责呢？A：如果要，凭什么要，为什么要？B：如果不要，因为什么原因可以不要？"}],
+ "只存在想象中的世界":[
+  {who:"依依",topic:"玩具是真的朋友吗",stage:"框架前",tag:"",dim:0,text:"在我小的时候也有把玩具当成是真的朋友跟他玩。"},
+  {who:"大满",topic:"玩具是真的朋友吗",stage:"框架前",tag:"",dim:0,text:"小孩会觉得玩具是真的，是因为小孩富有想象力很天真，同时缺乏对世界的了解就会这样。"},
+  {who:"教师",topic:"有没有圣诞老人",stage:"",tag:"辩题",dim:0,text:"正方：世界上有圣诞老人。反方：世界上没有圣诞老人。"},
+  {who:"悠悠",topic:"有没有圣诞老人",stage:"框架前",tag:"",dim:0,text:"我觉得世界上是有圣诞老人的，我看到了很多真实拍摄的电视，也是实拍，然后看到了圣诞老人，戴着圣诞风格的帽子和棉袄，也是一个老爷爷，还给拍摄的人员赠送礼物。"},
+  {who:"大满",topic:"有没有圣诞老人",stage:"框架前",tag:"",dim:0,text:"首先我反驳一下悠悠，因为即便是实拍，也可能是他配合拍摄人员装扮的也说不定吧。我觉得没有的理由有这几点：一、我也在圣诞节许过愿自己要礼物，但是礼物除了我的爸爸妈妈谁也没有告诉，所以即便有圣诞老人，他总不能会读心术吧。二、即便有圣诞老人，你的想法也都被透露去了，圣诞老人也不可能有那么多的钱平白无故给孩子们买那么多老些礼物。"},
+  {who:"教师",topic:"有没有圣诞老人",stage:"",tag:"红字·教师批注",dim:0,text:"（动机不合理）"},
+  {who:"依依",topic:"有没有圣诞老人",stage:"框架前",tag:"",dim:0,text:"我觉得世界上是有圣诞老人的，因为我有一次过圣诞节，当时刚关灯我爸爸就进来了，并且没过多久我就看到我的窗台上多出了几个礼物，但是当时我注意到我爸爸也没有拿什么东西进房间，并且我确定我睡前窗台上是没有东西的，这一整天都没有。所以如果不是圣诞老人那是谁放的呢。至于大满说的，有可能是圣诞老人会魔法，从异世界变出来的呢。"},
+  {who:"悠悠",topic:"有没有圣诞老人",stage:"框架前",tag:"",dim:0,text:"我也记得有一次我去滑冰的时候，当时正是圣诞节，我就去滑冰，后来滑着滑着我看到圣诞老人在发礼物，而且他真的发出了我想象的熊熊娃，从他的袋子里拿出来的还是。他之所以是是因为每个人想要什么他就能拿出什么，若是假扮的话他肯定拿不出来。"},
+  {who:"大满",topic:"有没有圣诞老人",stage:"框架前",tag:"",dim:0,text:"首先反设一下依依的观点，因为目前的科学就没有正面世界上存在魔法和所谓的异世界，其次一个东西也不可能凭空出现。至于依依的例子里虽然你看到爸爸好像没有拿什么进入房间，但是你看得到的未必是真实的，可能爸爸就是为了给你惊喜才把礼物藏了起来也说不定呢？再若悠悠的这个例子说这个圣诞老人想要什么就可以拿出什么，这个也算是一个戏法，里面实际上装的是大部分孩子都会喜欢的玩具，所以才会喜欢什么才拿出什么。"},
+  {who:"教师",topic:"有没有圣诞老人",stage:"",tag:"红字·教师批注",dim:0,text:"（科学的视角）（心理学）"},
+  {who:"悠悠",topic:"有没有圣诞老人",stage:"框架前",tag:"",dim:0,text:"先反驳大满的科学的说法，但是人们没有发现的东西你不能说不存在，只是我们目前无法证明罢了，就比如外星人。再若心理学也有它的限制，比如说当玩具不够了怎么办？其次他怎么能够知道每个小朋友喜欢的礼物是什么呢？毕竟孩子那么多呀。这么多的巧合肯定不现实。"},
+  {who:"教师",topic:"有没有圣诞老人",stage:"",tag:"红字·教师批注",dim:0,text:"（拆视角）"},
+  {who:"教师",topic:"这个问题需要答案吗",stage:"",tag:"板书原文·问句",dim:0,text:"关于圣诞老人是否存在这个问题，你觉得需要有一个答案吗？"},
+  {who:"依依",topic:"这个问题需要答案吗",stage:"框架前",tag:"",dim:0,text:"我认为这不需要有一个答案，毕竟这并不重要，因为如果有一个答案了，这个节日也就没法延续下去了，如果人们知道了任何一个结果，都会对世界的发展带来很不好的影响。因为如果圣诞老人要是肯定有很多孩子会热烈地期盼自己的礼物的到来，而如果圣诞老人要是没有，那些孩子该多伤心啊，这个节日可能也就不存在了。所以知道答案会让这个节日变得没那么好玩，所以不需要有一个答案。因为这样才会给大家留下一个悬念和期待。"},
+  {who:"悠悠",topic:"这个问题需要答案吗",stage:"框架前",tag:"",dim:0,text:"我也认为不需要有一个答案，因为每个人对于圣诞老人的定义是不一样的，因为我和依依认为的圣诞老人是给我们发礼物的好人，但大满说的是从现实来看的圣诞老人，他可以不一样，但是没必要去争执这个答案。"},
+  {who:"教师",topic:"圣诞老人得做到什么",stage:"",tag:"板书原文·问句",dim:0,text:"假如有圣诞老人，那么意味着他必须做到哪些事？"},
+  {who:"大满",topic:"圣诞老人得做到什么",stage:"框架前",tag:"",dim:0,text:"一、挨家挨户调查清楚每个小孩的愿望；二、用魔法把礼物做出来；三、用驯鹿挨家挨户的发放，在一晚上的时间里，除非会分身。"},
+  {who:"悠悠",topic:"圣诞老人得做到什么",stage:"框架前",tag:"",dim:0,text:"一、一定有魔法；二、一定有会飞的驯鹿。"},
+  {who:"教师",topic:"归谬法：有没有外星人",stage:"",tag:"框架·归谬法",dim:0,text:"用归谬法推理：假如有圣诞老人 → 他要在一天内飞遍世界上每一个孩子的家 → 这很荒谬，不可能是真的 → 所以「有圣诞老人」不足为真。"},
+  {who:"教师",topic:"归谬法：有没有外星人",stage:"",tag:"板书原文·问句",dim:0,text:"如果用归谬法推理——世界上有没有外星人？请问你该怎么分析？"},
+  {who:"依依",topic:"归谬法：有没有外星人",stage:"框架后",tag:"",dim:0,text:"假设没有外星人存在，我们应该能收到外星人所发来的电波，再者外星人还需要有能力穿梭于宇宙里，以及生存的能力，并且世界上也应该有人证可以证明自己见过外星人。而事实上……"},
+  {who:"教师",topic:"报社怎么回复这个孩子",stage:"",tag:"板书原文·问句",dim:0,text:"作为报社该怎么回复这个孩子关于圣诞老人有没有的问题？A：一定是有的。B：一定没有。C：其他说法。"},
+  {who:"悠悠",topic:"报社怎么回复这个孩子",stage:"框架后",tag:"",dim:0,text:"我选C，因为A和B我都不同意，因为一定有或者没有都需要你提出足够有说服力的理由。其次我认为人类目前的智慧还无法确定圣诞老人是不是存在的。因此我认为报社可以跟这个孩子说，圣诞老人是否存在你不需要一个一定的答案，我们也无法确定这个世界上有没有圣诞老人，但你可以去相信有。"},
+  {who:"依依",topic:"报社怎么回复这个孩子",stage:"框架后",tag:"",dim:0,text:"我也选择其他的说法，因为我最后应该会简单的告诉她你觉得有那就是有，别人说什么和你没有关系，因为作为报社我们虽然知道无法证明圣诞老人一定是存在的，但是作为报社要给小孩提供一些情绪价值吧，不然小孩可能会因为不知道答案而感到失望。应该给孩子提供一个让孩子相信圣诞老人是存在的答案，而不是一个一定的答案。"},
+  {who:"教师",topic:"相信的意义",stage:"",tag:"板书原文·问句",dim:0,text:"除了这些，你还知道哪些？为什么你觉得这些东西是存在的？"},
+  {who:"依依",topic:"相信的意义",stage:"框架后",tag:"",dim:0,text:"亲情、友情、爱情。"},
+  {who:"悠悠",topic:"相信的意义",stage:"框架后",tag:"",dim:0,text:"中国龙。"},
+  {who:"大满",topic:"相信的意义",stage:"框架后",tag:"",dim:0,text:"恐龙灭绝。"},
+  {who:"教师",topic:"相信的意义",stage:"",tag:"板书原文·问句",dim:0,text:"请问我们相信这些不存在的东西是存在的这件事情的意义是什么？圣诞老人、丘比特、友谊、龙、奥特曼、恐龙灭绝、外星人等等。"},
+  {who:"依依",topic:"相信的意义",stage:"框架后",tag:"",dim:0,text:"就拿外星人来说，如果相信外星人存在的人，就会有更多的人想要去成为宇航员，会出现更多的人探索这片宇宙，走向航空事业。但是如果大家都不相信外星人的存在，那么外星人这个概念也会慢慢被人们忘记，那些科幻电影也都拍不出来了。"},
+  {who:"大满",topic:"相信的意义",stage:"框架后",tag:"",dim:0,text:"拿恐龙灭绝举例，如果恐龙灭绝这件事情人们要是相信其存在，就会更深入的去发掘和探寻其原因，但如果人们都不相信其存在，过去发生的很多历史就无法被解释。"},
+  {who:"教师",topic:"相信的意义",stage:"",tag:"板书原文·问句",dim:0,text:"那么相信存在这件事情，需不需要注意某些方面？"}]
+};
+var SPEAKERS={
+ "我叫杰克逊（上）":["涵涵","若溪","嘟嘟"],
+ "只存在想象中的世界":["依依","大满","悠悠"]
+};
+/* ============================================================
+   维度信号推导（规则初判，非模型）
+   —— 只从「学生真实原话」出发，每条判定必须带原话证据。
+   —— 框架后的发言只观察，不参与升级判定。
+   —— 这是原型阶段的规则引擎；接入模型后由模型输出同结构结果。
+   ============================================================ */
+var SIG_RULES=[
+ {d:"D2 分析与推导",k:"因果",     re:/因为|所以|由于|导致|因此/,                 tag:"给出因果链",       w:2},
+ {d:"D2 分析与推导",k:"假设",     re:/如果|假如|万一|要是|倘若|假设/,             tag:"假设推演",         w:2},
+ {d:"D2 分析与推导",k:"枚举",     re:/一、|二、|三、|四、|首先|其次|再者|第一|第二/,tag:"分层列举",         w:3},
+ {d:"D1 立场与开放",k:"反驳",     re:/反驳|不同意|不太希望|不太同意|首先反|反设/,  tag:"主动持异见",       w:3},
+ {d:"D1 立场与开放",k:"接话",     re:/至于|再若|你看到|他说的是|你说的/,          tag:"回应对方论据",     w:1},
+ {d:"D3 标准自觉",k:"标准",       re:/标准|前提|取决于|要看|根据|定义|衡量/,        tag:"指出判断依据",     w:2},
+ {d:"D4 例证能力",k:"举例",       re:/比如|例如|就拿|举个例子|我有一次|记得有一次|在我的/, tag:"用具体事例",     w:1},
+ {d:"D5 收束与决断",k:"表态",     re:/我觉得|我认为|我的看法|我会|我选|我感觉/,   tag:"明确表态",         w:1},
+ {d:"D5 收束与决断",k:"权衡",     re:/虽然.*但是|但是.*需要|反而|但如果|万一.*就/, tag:"引入代价或反例",   w:3},
+ {d:"D6 互动回应",k:"互驳",       re:/反驳|至于.*说|再若.*说|你说的/,             tag:"接住并推进",       w:2},
+ {d:"D7 概念迁移",k:"迁移",       re:/就拿|比如.*来说|就好像|相当于|换个/,        tag:"转到另一情境",     w:2},
+ {d:"D8 问题生成",k:"提问",       re:/[？?]/,                                     tag:"自己提出疑问",     w:2}
+];
+
+// 证据句：优先取「正则真正命中的那个分句」，否则才退回全句摘要
+function sigAnchor(text,re){
+ var parts=String(text||"").split(/[，。；;、]/).filter(function(x){return x.length>=3});
+ for(var i=0;i<parts.length;i++){
+  if(!re.test(parts[i]))continue;
+  var q=parts[i];
+  if(/因为|所以|但是|可是|不过|如果|假如|万一|反而/.test(q)&&parts[i+1])q+="，"+parts[i+1];
+  // 太短的证据脱离上下文读不懂（"比如捡球"），往前补一句
+  if(q.length<8&&parts[i-1])q=parts[i-1]+"，"+q;
+  if(q.length>36)q=q.slice(0,36)+"…";
+  return q;
+ }
+ return anchorOf(text);
+}
+// 一条发言 → 命中的维度（去重，同维度取最高权重）
+function signalsOf(e){
+ var t=(e&&e.text)||"", hit={}, out=[];
+ for(var i=0;i<SIG_RULES.length;i++){
+  var r=SIG_RULES[i];
+  if(!r.re.test(t))continue;
+  if(hit[r.d]&&hit[r.d].w>=r.w)continue;
+  hit[r.d]={d:r.d,w:r.w,tag:r.tag,q:sigAnchor(t,r.re)};
+ }
+ for(var k in hit)out.push(hit[k]);
+ // 框架后的发言：只观察，不用于升级
+ if(e&&e.stage==="框架后")out.forEach(function(x){x.obs=1});
+ return out;
+}
+
+// 一个学员在若干课次里的维度信号汇总
+function deriveSignals(sid,sessions){
+ var s=stu(sid);if(!s)return {dims:[],note:""};
+ var acc={},order=DIMS.map(function(x){return x});
+ (sessions||[]).forEach(function(x){
+  var es=entriesOf(x).filter(whoIsIn(clsOf(x.classId),s));
+  es.forEach(function(e){
+   if(e.dim)return;                 // 置信度低的句子不参与
+   signalsOf(e).forEach(function(g){
+    var a=acc[g.d]||(acc[g.d]={d:g.d,w:0,n:0,ev:[],obsOnly:true,tags:[]});
+    a.n++;
+    if(g.w>a.w)a.w=g.w;
+    if(!g.obs)a.obsOnly=false;
+    if(a.tags.indexOf(g.tag)<0)a.tags.push(g.tag);
+    if(a.ev.length<2)a.ev.push({q:g.q,date:x.date,course:x.courseName,obs:g.obs||0});
+   });
+  });
+ });
+ var dims=order.filter(function(d){return acc[d]}).map(function(d){return acc[d]});
+ return {dims:dims,note:""};
+}
+
+// 八维雷达值：有老师确认过的记录用记录，否则用推导（0 表示观察机会不足）
+function radarFromDerive(sid){
+ var arr=[0,0,0,0,0,0,0,0];
+ var r=deriveSignals(sid,sessionsOfStudent(sid));
+ r.dims.forEach(function(a){
+  var idx=DIMS.indexOf(a.d);if(idx<0)return;
+  if(a.obsOnly){arr[idx]=Math.min(arr[idx]||9,3);return} // 只观察：给最低档，不虚增
+  var v=a.w>=3?5:(a.w>=2?4:3);
+  if(a.n>=3&&v<6)v=Math.min(6,v+1);
+  arr[idx]=Math.max(arr[idx],v);
+ });
+ return arr;
+}
+
+// 课次里的发言按话题分组（保持板书顺序）
+function topicsOf(entries){
+ var out=[],idx={};
+ (entries||[]).forEach(function(e){
+  var k=e.topic||"（未分话题）";
+  if(idx[k]===undefined){idx[k]=out.length;out.push({topic:k,items:[]})}
+  out[idx[k]].items.push(e);
+ });
+ return out;
+}
+
+var REC={};
+var RADAR={};
+
+
+var KEY="kq_archive_v10";
+var DB=load();
+function blank(){return {students:[],classes:[],sessions:[],passwords:{},log:[],snapshots:[],reports:[]}}
+function load(){
+ try{var d=JSON.parse(localStorage.getItem(KEY));if(d&&d.students&&d.classes)return d}catch(e){}
+ // 升版本后旧库不再沿用（避免把上一版的演示学员带进来），但老师改过的密码要保留
+ var b=blank();
+ var olds=["kq_archive_v08","kq_archive_v06","kq_archive_v05"];
+ for(var i=0;i<olds.length;i++){
+  try{
+   var o=JSON.parse(localStorage.getItem(olds[i]));
+   if(o&&o.passwords){for(var u in o.passwords){if(!b.passwords[u])b.passwords[u]=o.passwords[u]}}
+  }catch(e){}
+ }
+ // 赵博文的账号按你给的密码预置好，打开就能直接用
+ if(!b.passwords["zhaobowen"])b.passwords["zhaobowen"]="3321073";
+ return b;
+}
+// 演示数据：赵博文（zhaobowen）的两个真实班 + 两节真实板书
+function seedDemo(){
+ if(DB.students.filter(function(x){return x.id==="stA1"})[0]){alert("示例数据已经在库里了");return}
+ var students=[
+  {id:"stA1",name:"涵涵",alias:[],level:"L5",status:"在读"},
+  {id:"stA2",name:"若溪",alias:["小溪"],level:"L5",status:"在读"},
+  {id:"stA3",name:"嘟嘟",alias:["嘟嘟儿"],level:"L6",status:"在读"},
+  {id:"stB1",name:"依依",alias:["小依"],level:"L5",status:"在读"},
+  {id:"stB2",name:"大满",alias:[],level:"L6",status:"在读"},
+  {id:"stB3",name:"悠悠",alias:[],level:"L6",status:"在读"}
+ ];
+ var st={};students.forEach(function(x){st[x.id]="2026-09-01"});
+ var classes=[
+  {id:"cA",name:"周二19:20班",sem:"S6",grade:"四年级下",owner:"zhaobowen",
+   formerIds:[],memberIds:["stA1","stA2","stA3"],joinDates:st,joinStamps:{},boardNames:{}},
+  {id:"cB",name:"周一19:00班",sem:"S5",grade:"四年级上",owner:"zhaobowen",
+   formerIds:[],memberIds:["stB1","stB2","stB3"],joinDates:st,joinStamps:{},boardNames:{}}
+ ];
+ var mk=function(iso){return iso};
+ students.forEach(function(x){
+  var c=classes.filter(function(y){return y.memberIds.indexOf(x.id)>-1})[0];
+  c.joinStamps[x.id]=new Date("2026-09-01T12:00:00Z").toISOString();
+ });
+ var sessions=[
+  {id:"sA1",classId:"cA",date:"2026-11-03",createdAt:"2026-11-03T12:00:00.000Z",
+   courseId:"148",courseName:"我叫杰克逊（上）",absent:[],said:null,questions:null},
+  {id:"sB1",classId:"cB",date:"2026-11-02",createdAt:"2026-11-02T12:00:00.000Z",
+   courseId:"125",courseName:"只存在想象中的世界",absent:[],said:null,questions:null}
+ ];
+ DB.students=DB.students.concat(students);
+ DB.classes=DB.classes.concat(classes);
+ DB.sessions=DB.sessions.concat(sessions);
+ if(!DB.passwords["zhaobowen"])DB.passwords["zhaobowen"]="3321073";
+ save();
+ logAct("载入示例数据","周二19:20班 / 周一19:00班");
+ alert("已载入：2 个班 · 6 名学员 · 2 节课次\n（周二19:20班《我叫杰克逊（上）》、周一19:00班《只存在想象中的世界》）\n\n这两节课的板书是真实录入的，可以在「上传板书」里重新走一遍识别。");
+}
+
+function save(){localStorage.setItem(KEY,JSON.stringify(DB))}
+
+var user=null,role=null,curClass=null,curStu=null,curSession=null,archMode="stu",repScope=3;
+
+/* ---------- 基础工具 ---------- */
+function pwdOf(u){return DB.passwords[u]||PWD}
+function logAct(act,target){
+ DB.log.unshift({t:new Date().toLocaleString("zh-CN"),who:user,act:act,target:target||""});
+ if(DB.log.length>300)DB.log.length=300;save();
+}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!==undefined)e.innerHTML=html;return e}
+function stu(id){var r=DB.students.filter(function(s){return s.id===id})[0];return r||null}
+function clsOf(id){var r=DB.classes.filter(function(c){return c.id===id})[0];return r||null}
+// 在读：占名单、进选人列表
+function membersOf(c){var out=[],ms=(c.memberIds||[]);for(var i=0;i<ms.length;i++){var s=stu(ms[i]);if(s&&s.status==="在读")out.push(s)}return out}
+// 含已结课：算班里的人，但不再占名单
+function allMembersOf(c){var out=[],ms=(c.memberIds||[]);for(var i=0;i<ms.length;i++){var s=stu(ms[i]);if(s&&s.status!=="已删除")out.push(s)}return out}
+function gradedOutOf(c){var out=[],a=allMembersOf(c);for(var i=0;i<a.length;i++){if(a[i].status==="已结课")out.push(a[i])}return out}
+// 一个孩子可能同时上两个班，各班板书上的写法可以不同：class.boardNames[stuId]
+function boardNameIn(c,s){if(!c||!c.boardNames)return s.name;var v=c.boardNames[s.id];return v?v:s.name}
+// 板书称呼 → 本班学员。先认本班板书名，再认正式名/别名/曾用名
+function matchInClass(c,name){
+ var pool=allMembersOf(c),i,j;
+ for(i=0;i<pool.length;i++){if(boardNameIn(c,pool[i])===name)return pool[i]}
+ for(i=0;i<pool.length;i++){
+  var s=pool[i],ns=[s.name].concat(s.alias||[]);
+  var h=s.nameHistory||[];
+  for(j=0;j<h.length;j++)ns.push(h[j].old);
+  for(j=0;j<ns.length;j++){if(ns[j]===name)return s}
+ }
+ return null;
+}
+// 板书上的名字可能是本班写法、别名或曾用名，统一比对
+function whoIsIn(c,s){
+ var ns=[s.name].concat(s.alias||[],(s.nameHistory||[]).map(function(h){return h.old}));
+ if(c&&c.boardNames&&c.boardNames[s.id])ns.push(c.boardNames[s.id]);
+ return function(e){return ns.indexOf(e.who)>-1};
+}
+function whoIs(s){return whoIsIn(null,s)}
+function stuByName(n){return DB.students.filter(function(s){return s.name===n||(s.alias||[]).indexOf(n)>-1})[0]}
+function visibleClasses(){
+ var vs=role==="admin"?DB.classes:DB.classes.filter(function(c){return c.owner===user});
+ return vs;
+}
+function visibleStudents(){
+ var ids={};
+ visibleClasses().forEach(function(c){
+  (c.memberIds||[]).forEach(function(i){ids[i]=1});
+  (c.formerIds||[]).forEach(function(i){ids[i]=1});
+ });
+ return DB.students.filter(function(s){return ids[s.id]});
+}
+// 学员在某课次是否算"参与者"：
+// memberIds=当前在班；formerIds=曾在本班（转班/退班后历史仍归他）；guestIds=本节课来补课
+function inList(arr,v){if(!arr)return false;for(var i=0;i<arr.length;i++){if(arr[i]===v)return true}return false}
+function inRoster(s,stuId){
+ var c=clsOf(s.classId);if(!c)return false;
+ // 曾在本班：历史全算
+ if(inList(c.formerIds,stuId))return true;
+ // 本节课来补课：只算这一节
+ if(inList(s.guestIds,stuId))return true;
+ // 当前在班：只算入班日期之后的课，转班前该班的老课不串到他头上
+ if(inList(c.memberIds,stuId)){
+  var jd=(c.joinDates||{})[stuId];
+  if(jd&&s.date<jd){
+   // 课次日期早于入班日期：只有「入班前就录入过的课」才不归他。
+   // 建班后补录的历史课（录入时间晚于入班时间）仍然算他的，否则补录全被吃掉。
+   var st=(c.joinStamps||{})[stuId],sc=s.createdAt;
+   if(!(st&&sc&&sc>st))return false;
+  }
+  return true;
+ }
+ return false;
+}
+function sessionsOfStudent(stuId){
+ var out=[],ss=DB.sessions;
+ for(var i=0;i<ss.length;i++){
+  if(inRoster(ss[i],stuId)&&!inList(ss[i].absent,stuId))out.push(ss[i]);
+ }
+ return out.sort(function(a,b){return a.date<b.date?1:-1});
+}
+function absentOf(stuId){
+ var out=[],ss=DB.sessions;
+ for(var i=0;i<ss.length;i++){
+  if(inRoster(ss[i],stuId)&&inList(ss[i].absent,stuId))out.push(ss[i]);
+ }
+ return out.sort(function(a,b){return a.date<b.date?1:-1});
+}
+// 记录按 id 优先、名字兜底（改名不丢档案）
+function recOf(s){
+ if(!s)return {recs:[]};
+ return REC[s.id]||REC[s.name]||{recs:[]};
+}
+function radarOf(s){
+ if(!s)return [0,0,0,0,0,0,0,0];
+ // 老师确认过的记录优先；没有就当场从原话推导，绝不写死
+ if(RADAR[s.id]||RADAR[s.name])return RADAR[s.id]||RADAR[s.name];
+ return radarFromDerive(s.id);
+}
+function courseById(id){
+ for(var i=0;i<COURSE_ARCHIVE.length;i++){var g=COURSE_ARCHIVE[i];
+  for(var j=0;j<g.units.length;j++){var u=g.units[j];
+   for(var k=0;k<u.lessons.length;k++){if(u.lessons[k].id===id)return u.lessons[k];}}}
+ return null;
+}
+function courseByName(n){
+ for(var i=0;i<COURSE_ARCHIVE.length;i++){var g=COURSE_ARCHIVE[i];
+  for(var j=0;j<g.units.length;j++){var u=g.units[j];
+   for(var k=0;k<u.lessons.length;k++){if(u.lessons[k].name===n)return u.lessons[k];}}}
+ return null;
+}
+function gradeOfSem(sem){
+ var g=COURSE_ARCHIVE.filter(function(x){return x.sem===sem})[0];
+ return g?g.grade:"未设置";
+}
+
+/* ---------- 登录 ---------- */
+function doLogin(){
+ var u=document.getElementById("lu").value.trim(),p=document.getElementById("lp").value;
+ var a=ACCOUNTS.filter(function(x){return x.u===u})[0];
+ if(!a||pwdOf(u)!==p){document.getElementById("lerr").textContent="用户名或密码不正确";return}
+ user=u;role=a.admin?"admin":"teacher";
+ if(!DB.passwords[u]){document.getElementById("pwdModal").classList.remove("hidden");return}
+ enter();
+}
+function doChangePwd(){
+ var p1=document.getElementById("np1").value,p2=document.getElementById("np2").value;
+ if(p1.length<6){document.getElementById("perr").textContent="密码至少 6 位";return}
+ if(p1!==p2){document.getElementById("perr").textContent="两次输入不一致";return}
+ DB.passwords[user]=p1;save();
+ document.getElementById("pwdModal").classList.add("hidden");
+ logAct("修改初始密码","—");enter();
+}
+function enter(){
+ document.getElementById("loginView").classList.add("hidden");
+ document.getElementById("app").classList.remove("hidden");
+ document.getElementById("userChip").innerHTML=ACCOUNTS.filter(function(x){return x.u===user})[0].name+" 老师 · "+(role==="admin"?'<span class="tag p">管理员</span>':'<span class="tag">教师</span>');
+ if(role==="admin")document.getElementById("navLog").classList.remove("hidden");
+ document.getElementById("notice").classList.remove("hidden");
+ logAct("登录","—");
+ buildAll();
+}
+function doLogout(){location.reload()}
+function closeNotice(){document.getElementById("notice").classList.add("hidden")}
+
+document.querySelectorAll("aside button.nav[data-t]").forEach(function(b){b.onclick=function(){go(b.dataset.t)}});
+function go(t){
+ document.querySelectorAll("aside button.nav[data-t]").forEach(function(b){b.classList.toggle("on",b.dataset.t===t)});
+ // 「更多」里有页面被选中时，父项也要亮，否则看不出自己在哪
+ var mb=document.getElementById("moreBox"),mbtn=document.getElementById("moreBtn");
+ if(mbtn)mbtn.classList.toggle("on",!!(mb&&mb.querySelector('button[data-t="'+t+'"]')));
+ document.querySelectorAll(".pane").forEach(function(p){p.classList.remove("on")});
+ document.getElementById(t).classList.add("on");
+ if(t==="p_archive")renderArchive();
+ if(t==="p_report")renderReport();
+ if(t==="p_course")renderCourse();
+ if(t==="p_log")renderLog();
+ if(t==="p_maint")renderMaint();
+}
+/* 「更多」是折叠区，不是页面：点开再点，收起 */
+function toggleMore(){
+ var m=document.getElementById("moreBox");
+ if(m)m.classList.toggle("hidden");
+}
+function showRules(){
+ document.getElementById("notice").classList.remove("hidden");
+}
+/* 统一页面头：标题 + 一句人话，避免每个卡片各写一个小标题 */
+function pageHead(emoji,title,sub){
+ var h=el("div","phead");
+ h.innerHTML='<h1>'+esc(emoji+" "+title)+'</h1>'+(sub?'<p>'+esc(sub)+'</p>':"");
+ return h;
+}
+
+/* ---------- 板书上传 ---------- */
+function buildUpload(){
+ var p=document.getElementById("p_upload");p.innerHTML="";
+ p.appendChild(pageHead("📝","上传板书","下课就传，攒到晚上一起传也行。截图直接粘，不用先存成文件。"));
+ var c1=el("div","card",'<h2>这节课</h2>');
+ var f=el("div");
+ f.innerHTML='<label class="fl">班级</label><select id="up_cls"></select>'+
+  '<label class="fl">日期</label><input type="date" id="up_date">'+
+  '<label class="fl">课程（学期 → 单元 → 课节）</label><div class="row"><select id="up_grade"></select><select id="up_unit"></select><select id="up_lesson"></select></div>';
+ c1.appendChild(f);
+
+ var g=document.createElement("div");
+ g.appendChild(el("h2","","板书长图"));
+ g.appendChild(el("label","fl","可多段，按顺序合并"));
+ var drop=el("div","drop","<b>点击、拖入，或直接 Ctrl+V 粘贴截图</b><span>一次多张也行 · 从微信 / QQ / 系统截图工具复制后直接粘贴</span>");
+ drop.tabIndex=0;
+ var inp=el("input");inp.type="file";inp.multiple=true;inp.accept="image/*";inp.style.display="none";
+ var th=el("div","thumb");th.id="up_th";
+ g.appendChild(drop);g.appendChild(inp);g.appendChild(th);
+ g.appendChild(el("div","tips","<b>截图建议 ·</b> 按<b>话题</b>分段截图，同一个话题尽量放在一张图里。切在两张图中间时，句子会断，识别容易出错。<br><b>顺序 ·</b> 谁先谁后按你加入的先后排；如果顺序错了，点缩略图右上角的序号位置可以调换。"));
+ var row=el("div","row");row.style.marginTop="14px";
+ var run=el("button","btn","开始识别与切分");run.disabled=true;run.id="up_run";
+ var clr=el("button","btn g","清空重来");
+ row.appendChild(run);row.appendChild(clr);g.appendChild(row);
+
+ // 进度条
+ var prog=el("div","prog");
+ var lbl=el("div","lbl");
+ var phaseEl=el("span","","等图片");phaseEl.id="up_phase";
+ var pctEl=el("b","","0%");pctEl.id="up_pct";
+ lbl.appendChild(phaseEl);lbl.appendChild(pctEl);
+ var trk=el("div","trk");
+ var fill=document.createElement("i");fill.id="up_bar";
+ trk.appendChild(fill);
+ prog.appendChild(lbl);prog.appendChild(trk);
+ prog.style.display="none";
+ g.appendChild(prog);
+ var st=el("p","muted");st.id="up_st";g.appendChild(st);
+ var host=el("div","sec");host.id="up_result";
+ g.appendChild(host);
+ p.appendChild(c1);
+ var c2=el("div","card");c2.appendChild(g);p.appendChild(c2);
+
+ var cs=document.getElementById("up_cls"),vs=visibleClasses();
+ if(vs.length===0)cs.appendChild(el("option","","（该账号暂未分配班级）"));
+ vs.forEach(function(c){var o=el("option","",c.name+"（"+c.grade+"）");o.value=c.id;cs.appendChild(o)});
+ var d=document.getElementById("up_date");d.value=new Date().toISOString().slice(0,10);
+ var gr=document.getElementById("up_grade"),un=document.getElementById("up_unit"),le=document.getElementById("up_lesson");
+ COURSE_ARCHIVE.forEach(function(g0){var o=el("option","",g0.grade);o.value=g0.sem;gr.appendChild(o)});
+ var cc0=clsOf(cs.value);
+ if(cc0){for(var i=0;i<gr.options.length;i++){if(gr.options[i].value===cc0.sem)gr.selectedIndex=i}}
+ function units(){un.innerHTML="";var g0=COURSE_ARCHIVE[gr.selectedIndex];
+  g0.units.forEach(function(u){un.appendChild(el("option","",u.unit))});lessons()}
+ function lessons(){le.innerHTML="";var g0=COURSE_ARCHIVE[gr.selectedIndex],u=g0.units[un.selectedIndex];
+  if(!u||!u.lessons.length)le.appendChild(el("option","","（该单元暂无课节）"));
+  else u.lessons.forEach(function(l){var o=el("option","",l.name);o.value=l.id;le.appendChild(o)});
+  le.appendChild(el("option","","＋ 临时课节（不在课程库中）"));
+  le.lastChild.value="";}
+ gr.onchange=units;un.onchange=lessons;
+ cs.onchange=function(){var c2=clsOf(cs.value);if(c2){for(var i=0;i<gr.options.length;i++){if(gr.options[i].value===c2.sem)gr.selectedIndex=i}}units()};
+ units();
+
+ /* ---- 收图：点击 / 拖入 / 粘贴 ---- */
+ var imgs=[];
+ function flash(){drop.classList.add("pasting");setTimeout(function(){drop.classList.remove("pasting")},260)}
+ function addFiles(fs){
+  var n=0;
+  for(var i=0;i<fs.length;i++){
+   var f0=fs[i];
+   if(!f0||!f0.type||f0.type.indexOf("image/")!==0)continue;
+   n++;
+   var box=el("div","thbox");
+   var img=document.createElement("img");
+   var tt=el("span","tt","待识别");
+   var pb=el("div","pgs");
+   var pbi=document.createElement("i");pb.appendChild(pbi);
+   box.appendChild(img);box.appendChild(tt);box.appendChild(pb);
+   box.onclick=function(){
+    if(!confirm("把这张从列表里去掉？"))return;
+    var k=imgs.indexOf(rec);if(k>-1)imgs.splice(k,1);
+    if(box.parentNode)box.parentNode.removeChild(box);
+    renum();
+   };
+   th.appendChild(box);
+   var rec={box:box,tt:tt,bar:pbi,ok:false};
+   imgs.push(rec);
+   (function(rec,f0){
+    var r=new FileReader();
+    r.onload=function(){var im=rec.box.querySelector("img");if(im)im.src=r.result;rec.ok=true;renum()};
+    r.readAsDataURL(f0);
+   })(rec,f0);
+  }
+  if(!n){st.textContent="没读到图片 (・_・) 如果剪贴板里是文件路径或网页链接，请先截图再粘贴。";return}
+  run.disabled=false;st.textContent="已加入 "+imgs.length+" 张，可以开始识别了 ✧";
+  flash();
+ }
+ function renum(){
+  for(var i=0;i<imgs.length;i++){
+   var b=imgs[i].box;
+   var t=b.querySelector(".no");
+   if(!t){t=el("span","no","");b.appendChild(t)}
+   t.textContent=i+1;
+  }
+  if(!imgs.length){run.disabled=true;st.textContent=""}
+ }
+ drop.onclick=function(){inp.click()};
+ drop.ondragover=function(e){e.preventDefault();drop.classList.add("pasting")};
+ drop.ondragleave=function(){drop.classList.remove("pasting")};
+ drop.ondrop=function(e){e.preventDefault();drop.classList.remove("pasting");addFiles(e.dataTransfer.files)};
+ inp.onchange=function(){addFiles(inp.files)};
+ clr.onclick=function(){
+  imgs=[];th.innerHTML="";host.innerHTML="";prog.style.display="none";st.textContent="";
+  run.disabled=true;renum();
+ };
+
+ // 粘贴：只在「上传板书」页生效，且只接图片，不影响别处粘贴文字
+ if(window.__kqPaste)document.removeEventListener("paste",window.__kqPaste);
+ window.__kqPaste=function(e){
+  var pane=document.getElementById("p_upload");
+  if(!pane||!pane.classList.contains("on"))return;
+  var cd=e.clipboardData||window.clipboardData;
+  if(!cd)return;
+  var files=[],i;
+  if(cd.items&&cd.items.length){
+   for(i=0;i<cd.items.length;i++){
+    var it=cd.items[i];
+    if(it.kind==="file"&&it.type&&it.type.indexOf("image/")===0){
+     var fl=it.getAsFile();if(fl)files.push(fl);
+    }
+   }
+  }
+  if(!files.length&&cd.files&&cd.files.length){
+   for(i=0;i<cd.files.length;i++){if(cd.files[i].type.indexOf("image/")===0)files.push(cd.files[i])}
+  }
+  if(!files.length)return;
+  e.preventDefault();
+  addFiles(files);
+ };
+ document.addEventListener("paste",window.__kqPaste);
+
+ /* ---- 识别：分阶段进度 ---- */
+ var PHASES=[
+  [0,"读取图片…"],[8,"校正与去噪…"],[22,"按姓名切分说话人…"],
+  [45,"按话题切分段落…"],[62,"在本次名单里匹配称呼…"],[76,"提取学生发言…"],[90,"倒推教师提问…"],[99,"整理结果…"]
+ ];
+ var timer=null;
+ run.onclick=function(){
+  run.disabled=true;clr.disabled=true;
+  host.innerHTML="";prog.style.display="block";
+  imgs.forEach(function(r){r.tt.textContent="识别中";r.bar.style.width="0%"});
+  var pct=0;
+  if(timer)clearInterval(timer);
+  timer=setInterval(function(){
+   pct+=1+Math.round(Math.random()*2);
+   if(pct>100)pct=100;
+   var ph=PHASES[0][1];
+   for(var i=0;i<PHASES.length;i++){if(pct>=PHASES[i][0])ph=PHASES[i][1]}
+   fill.style.width=pct+"%";
+   pctEl.textContent=pct+"%";
+   phaseEl.textContent=(imgs.length>1?"第 "+Math.min(imgs.length,Math.ceil(pct/100*imgs.length))+" / "+imgs.length+" 张 · ":"")+ph;
+   // 每张图自己的小进度
+   var per=imgs.length?Math.min(100,Math.round(pct*imgs.length/Math.max(1,imgs.length)*100/100)):0;
+   imgs.forEach(function(r,k){
+    var done=(k+1)/imgs.length*100;
+    var v=pct>=done?100:(pct>=done-100/imgs.length?Math.round((pct-(done-100/imgs.length))/(100/imgs.length)*100):0);
+    r.bar.style.width=v+"%";
+    r.tt.textContent=v>=100?"完成":v>0?"识别中":"待识别";
+   });
+   if(pct>=100){
+    clearInterval(timer);timer=null;
+    phaseEl.textContent="识别完成 ✧٩(ˊωˋ*)و✧";
+    imgs.forEach(function(r){r.bar.style.width="100%";r.tt.textContent="完成"});
+    run.disabled=false;clr.disabled=false;
+    showDetected();
+   }
+  },38);
+ };
+
+ /* ---- 结果交给顶层 renderDetect 渲染 ---- */
+ function showDetected(){
+  var cls=clsOf(cs.value);
+  if(!cls){st.textContent="请先选择班级";return}
+  var lessonId=le.value,tmpName="";
+  if(!lessonId){tmpName=prompt("临时课节名称：","活动课");if(!tmpName){st.textContent="已取消";return}}
+  var cname=lessonId?le.options[le.selectedIndex].text:tmpName;
+  renderDetect(host,{cls:cls,cname:cname,date:d.value,lessonId:lessonId,
+   entries:(ENTRIES[cname]||[]).slice(),stEl:st,
+   onSaved:function(){setTimeout(function(){curClass=cls.id;curStu=null;go("p_archive")},900)}});
+ }
+}
+
+/* ---- 识别结果：发言按人归集 + 问题链（可改） + 存盘 ---- */
+// opt: {cls, cname, date, lessonId, entries, stEl, onSaved}
+function renderDetect(host,opt){
+ var cls=opt.cls,cname=opt.cname,date=opt.date||today(),lessonId=opt.lessonId||"";
+ var entries=(opt.entries||[]).map(function(e){return {who:e.who,topic:e.topic||"",stage:e.stage||"",tag:e.tag||"",dim:e.dim||0,text:e.text||""}});
+ var mem=membersOf(cls),matched=[],unmatched=[];
+ var sp=SPEAKERS[cname]||[];
+ sp.forEach(function(n){
+  var s=matchInClass(cls,n);
+  if(s)matched.push(n);else unmatched.push(n);
+ });
+ if(opt.stEl)opt.stEl.innerHTML="识别出的称呼：<b class='hl'>"+(sp.join("、")||"（本课暂无示例板书，真实识别接入后在此显示）")+"</b> ｜ 本班内已匹配 "+matched.length+"/"+sp.length;
+
+ host.innerHTML="";
+ host.appendChild(el("h3","","识别结果 · 请确认 <span class='tag a'>必须人工确认</span>"));
+ host.appendChild(el("p","muted",esc(cname)+" · "+esc(date)+" · "+esc(cls.name)));
+
+ // 出席
+ var absent=[];
+ var abW=el("div");
+ abW.appendChild(el("p","muted","本次出席（点一下切缺勤，缺勤不计入观察机会）"));
+ var abRow=el("div","row");
+ mem.forEach(function(s){
+  var nm=boardNameIn(cls,s);
+  var pill=el("span","pill on",esc(nm));
+  pill.onclick=function(){
+   var k=absent.indexOf(s.id);
+   if(k<0){absent.push(s.id);pill.className="pill";pill.innerHTML=esc(nm)+" · 缺勤"}
+   else{absent.splice(k,1);pill.className="pill on";pill.innerHTML=esc(nm)}
+  };
+  abRow.appendChild(pill);
+ });
+ abW.appendChild(abRow);host.appendChild(abW);
+
+ // 未匹配的称呼
+ unmatched.forEach(function(n){
+  var row2=el("div","row");row2.style.marginTop="10px";
+  row2.appendChild(el("span","",'<span class="tag a">未匹配</span> 板书上的称呼「'+esc(n)+'」'));
+  var sel=el("select");sel.appendChild(el("option","","— 绑定到本班学员 —"));
+  mem.forEach(function(s){var o=el("option","",s.name);o.value=s.id;sel.appendChild(o)});
+  var b1=el("button","btn sm","记为本班板书名");
+  b1.onclick=function(){
+   if(!sel.value)return;
+   var s=stu(sel.value);
+   cls.boardNames=cls.boardNames||{};cls.boardNames[s.id]=n;
+   s.alias=s.alias||[];if(s.alias.indexOf(n)<0)s.alias.push(n);
+   save();logAct("绑定板书名",cls.name+" / "+n+" → "+s.name);
+   row2.innerHTML='<span class="tag t">已记下</span> 在本班，板书上的「'+esc(n)+'」= '+esc(s.name)+'（只影响本班识别）';
+  };
+  var b2=el("button","btn sm g","新建学员");
+  b2.onclick=function(){
+   var id="st"+Date.now();
+   DB.students.push({id:id,name:n,alias:[],level:"L1",status:"在读"});
+   cls.memberIds=cls.memberIds||[];cls.memberIds.push(id);
+   cls.joinDates=cls.joinDates||{};cls.joinDates[id]=date;
+   cls.joinStamps=cls.joinStamps||{};cls.joinStamps[id]=nowISO();
+   save();logAct("新建学员",cls.name+" / "+n);
+   row2.innerHTML='<span class="tag t">已新建并加入本班</span> '+esc(n);
+  };
+  row2.appendChild(sel);row2.appendChild(b1);row2.appendChild(b2);host.appendChild(row2);
+ });
+
+  /* 一、话题骨架：这节课聊到哪几个话题，谁在哪一段沉默 */
+ var tl=topicsOf(entries);
+ var says=entries.filter(function(e){return e.who!=="教师"});
+ var whoAll=[];says.forEach(function(e){if(whoAll.indexOf(e.who)<0)whoAll.push(e.who)});
+ var secT=el("div","sec");
+ secT.appendChild(el("h3","","一、话题骨架（"+tl.length+" 个话题）"));
+ secT.appendChild(el("p","muted","按板书上的话题标题切分。每个话题下列出谁说过话——<b>空白格比有内容更值得看</b>：一个孩子前面说得很好、后面整段沉默，比他说得少更需要你注意。"));
+ var grid=el("div","tgrid");
+ tl.forEach(function(t,ti){
+  var said={};t.items.forEach(function(e){if(e.who!=="教师")said[e.who]=(said[e.who]||0)+1});
+  var cell=el("div","tcell");
+  var hd=el("div","thd");
+  hd.innerHTML='<span class="tn">'+(ti+1)+'</span><b>'+esc(t.topic)+'</b><span class="tc">'+Object.keys(said).length+'/'+whoAll.length+' 人</span>';
+  cell.appendChild(hd);
+  var ul=el("div","tul");
+  whoAll.forEach(function(w){
+   var n=said[w]||0;
+   ul.innerHTML+='<span class="tw'+(n?"":" off")+'">'+esc(w)+(n?" · "+n:" · 未发言")+'</span>';
+  });
+  cell.appendChild(ul);
+  grid.appendChild(cell);
+ });
+ secT.appendChild(grid);
+ host.appendChild(secT);
+
+ /* 二、学生发言：按人归集，人下面再按话题分组 */
+ var byWho={},order=[];
+ says.forEach(function(e){
+  if(!byWho[e.who]){byWho[e.who]=[];order.push(e.who)}
+  byWho[e.who].push(e);
+ });
+ var sec1=el("div","sec");
+ sec1.appendChild(el("h3","","二、学生发言（"+says.length+" 条 · "+order.length+" 人 · "+tl.length+" 个话题）"));
+ sec1.appendChild(el("p","muted","先按人、再按话题。点名字展开原话，原话可以直接改，改完存进档案。"));
+ if(!says.length)sec1.appendChild(el("p","muted","本节课没有识别到学生发言。"));
+ order.forEach(function(who){
+  var arr=byWho[who];
+  var sp2=matchInClass(cls,who);
+  var low=arr.filter(function(x){return x.dim}).length;
+  var nTopic=topicsOf(arr).length;
+  var box=el("div","spk");
+  var hd=el("div","hd");
+  hd.innerHTML='<b>'+esc(who)+'</b>'+
+   (sp2?'<span class="tag p">'+esc(boardNameIn(cls,sp2))+'</span>':'<span class="tag a">未匹配</span>')+
+   '<span class="tag">'+arr.length+' 条 · 涉及 '+nTopic+' 个话题</span>'+
+   (low?'<span class="tag a">含 '+low+' 条置信度低</span>':"")+
+   '<span style="margin-left:auto;color:var(--text3);font-size:11px">展开 ▾</span>';
+  hd.onclick=function(){box.classList.toggle("open")};
+  var bd=el("div","bd");
+  // 该生没说话的话题，也标出来（沉默是信息）
+  var mine={};arr.forEach(function(e){mine[e.topic||"（未分话题）"]=1});
+  tl.forEach(function(t){
+   var sub=arr.filter(function(e){return (e.topic||"（未分话题）")===t.topic});
+   var grp=el("div","tgrp");
+   grp.appendChild(el("div","tgh",esc(t.topic)+(sub.length?"":" · 未发言")));
+   if(!sub.length){grp.className="tgrp off";bd.appendChild(grp);return}
+   sub.forEach(function(e){
+    var line=el("div","say");
+    line.innerHTML='<div class="st">'+esc(e.stage?e.stage+(e.tag?" · "+e.tag:""):(e.tag||""))+'</div>'+
+     '<div contenteditable="true">'+esc(e.text)+'</div>';
+    var ed=line.querySelector("[contenteditable]");
+    ed.onblur=function(){e.text=ed.textContent};
+    grp.appendChild(line);
+   });
+   bd.appendChild(grp);
+  });
+  box.appendChild(hd);box.appendChild(bd);sec1.appendChild(box);
+ });
+ host.appendChild(sec1);
+
+ /* 三、问题链：板书原句 + 从发言倒推 */
+ var qs=inferQuestions(entries,cls);
+ var sec2=el("div","sec");
+ sec2.appendChild(el("h3","","三、这节课的问题链（可改）"));
+ sec2.appendChild(el("p","muted","「板书原文」是从板书里直接记到的教师问句；「AI 倒推」是看着学生的回答补出来的，<b>很可能不是你的原话</b>，请逐条核对。"));
+ var qWrap=el("div");
+ qs.forEach(function(q,i){qWrap.appendChild(qRow(q,i+1))});
+ sec2.appendChild(qWrap);
+ var addQ=el("button","btn sm g","＋ 加一条");
+ addQ.style.marginTop="10px";
+ addQ.onclick=function(){
+  var q={text:"",src:"手填"};
+  qs.push(q);
+  var r=qRow(q,qs.length);
+  qWrap.appendChild(r);
+  var ed=r.querySelector(".tx");
+  if(ed&&ed.focus)ed.focus();
+ };
+ sec2.appendChild(addQ);
+ host.appendChild(sec2);
+
+ function qRow(q,idx){
+  var r=el("div","q");
+  r.innerHTML='<div class="n">'+idx+'</div>'+
+   '<div class="tx" contenteditable="true">'+esc(q.text)+'</div>'+
+   '<div class="src'+(q.src==="AI 倒推"?" ai":"")+'">'+esc(q.src)+'</div>'+
+   '<div class="del">删</div>';
+  var tx=r.querySelector(".tx");
+  tx.onblur=function(){q.text=tx.textContent.trim()};
+  var dl=r.querySelector(".del");
+  dl.onclick=function(){
+   var k=qs.indexOf(q);if(k>-1)qs.splice(k,1);
+   if(r.parentNode)r.parentNode.removeChild(r);
+  };
+  return r;
+ }
+
+ /* 三、存盘 */
+ var saveBtn=el("button","btn t","确认并存入学员档案");
+ saveBtn.style.marginTop="16px";
+ saveBtn.onclick=function(){
+  var said=entries.map(function(e){return {who:e.who,topic:e.topic,stage:e.stage,tag:e.tag,dim:e.dim,text:e.text}});
+  var questions=qs.filter(function(q){return q.text&&q.text.trim()}).map(function(q){return {text:q.text.trim(),src:q.src}});
+  var ses={
+   id:"s"+Date.now(),classId:cls.id,date:date,createdAt:nowISO(),
+   courseId:lessonId||("tmp"+Date.now()),courseName:cname,
+   absent:absent.slice(),said:said,questions:questions
+  };
+  DB.sessions.push(ses);
+  save();
+  logAct("存入板书档案",cls.name+" / "+cname+" / "+date+(absent.length?" / 缺勤"+absent.length+"人":"")+" / 提问 "+questions.length+" 条");
+  host.innerHTML='<div class="warn" style="background:#f2f9f0;border-color:#cfe6c7;color:#3d6b2f">'+
+   '<b>已存入学员档案 ✧</b><br>'+esc(cls.name)+' · '+esc(cname)+' · '+esc(date)+'<br>'+
+   '学生发言 '+said.length+' 条，问题链 '+questions.length+' 条。在「学员档案」里点这个孩子就能看到。</div>';
+  if(opt.onSaved)opt.onSaved(ses);
+ };
+ host.appendChild(saveBtn);
+ host.appendChild(el("p","subtle","存入后，这节课会同时出现在：本班课次列表、每个发言学员的个人档案、课程档案的这节课下面。"));
+ return {absent:absent,questions:qs,entries:entries,save:saveBtn,host:host};
+}
+
+/* ---- 从学生发言倒推教师提问 ---- */
+function anchorOf(t){
+ var raw=String(t||"").replace(/\s+/g,"");
+ var parts=raw.split(/[，。；;、]/).filter(function(x){return x&&x.length>=4});
+ if(!parts.length)parts=[raw];
+ // 证据要能看出「为什么命中」：优先取带因果/转折标记的那半句，并连上后一句
+ var MARK=/因为|所以|但是|可是|不过|如果|假如|万一|反而/;
+ for(var i=0;i<parts.length;i++){
+  if(MARK.test(parts[i])){
+   var q=parts[i]+(parts[i+1]?"，"+parts[i+1]:"");
+   if(q.length>36)q=q.slice(0,36)+"…";
+   return q;
+  }
+ }
+ parts.sort(function(a,b){return b.length-a.length});
+ var a=parts[0]||raw;
+ if(a.length>30)a=a.slice(0,30)+"…";
+ return a;
+}
+function inferQuestions(entries,cls){
+ var out=[],seen={};
+ // ① 板书里直接记到的教师问句，原样保留
+ (entries||[]).forEach(function(e){
+  if(e.who!=="教师")return;
+  var t=(e.text||"").trim();
+  if(/[？?]/.test(t)){out.push({text:t,src:"板书原文"});}
+ });
+ // ② 看着学生的回答补出来的追问
+ var TPL=[
+  {k:"ask",re:/[？?]/,mk:function(w,a){return w+" 提了一个问题：「"+a+"」。先把问题还给他——你自己怎么答？"}},
+  {k:"but",re:/但是|可是|不过|然而/,mk:function(w,a){return "他补了一句「"+a+"」。问全班：这个转折，能不能推翻前面那个理由？"}},
+  {k:"norm",re:/应该|必须|不能|不该|一定要/,mk:function(w,a){return "他说「"+a+"」。追问：为什么是「必须」，而不是「可以」？换个情境还成立吗？"}},
+  {k:"cause",re:/因为|所以|由于|导致/,mk:function(w,a){return "他给了一条因果：「"+a+"」。追问：这条因果有没有反例？"}},
+  {k:"stand",re:/我觉得|我认为|在我看来|我的观点/,mk:function(w,a){return "他表了态：「"+a+"」。追问：如果对方不同意，你拿什么说服他？"}}
+ ];
+ (entries||[]).forEach(function(e){
+  if(e.who==="教师"||e.dim)return; // 置信度低的句子不拿来倒推
+  var t=(e.text||"").trim();
+  if(!t)return;
+  for(var i=0;i<TPL.length;i++){
+   if(!TPL[i].re.test(t))continue;
+   var key=e.who+"|"+TPL[i].k;
+   if(seen[key])return;
+   seen[key]=1;
+   out.push({text:TPL[i].mk(e.who,anchorOf(t)),src:"AI 倒推"});
+   return;
+  }
+ });
+ return out.slice(0,7);
+}
+// 课次的发言：优先用存档时存下的，回退到示例库
+function entriesOf(x){
+ if(x&&x.said&&x.said.length)return x.said;
+ return ENTRIES[x?x.courseName:""]||[];
+}
+
+/* ---------- 学员档案 ---------- */
+function renderArchive(){
+ // 数据被清空或学员被删掉时，面包屑不能指向不存在的对象
+ if(curClass&&!clsOf(curClass))curClass=null;
+ if(curStu&&!stu(curStu))curStu=null;
+ var p=document.getElementById("p_archive");p.innerHTML="";
+ if(!curClass&&!curStu&&!curSession){
+  p.appendChild(pageHead("🎒","学员档案","档案挂在这个人身上：改名、转班、换老师都不会断。点一个孩子，就能看他每一节课说过什么。"));
+  var crumb='<b onclick="archHome()">全部学员</b>';
+ } else {
+  var crumb='<b onclick="archHome()">学员档案</b>';
+ }
+ if(curClass)crumb+=' / <b onclick="archClass(\''+curClass+'\')">'+clsOf(curClass).name+'</b>';
+ if(curStu)crumb+=' / '+stu(curStu).name;
+ if(curSession)crumb+=' / '+curSession.date;
+ if(curClass||curStu||curSession)p.appendChild(el("div","crumb",crumb));
+ if(curSession)renderSessionDetail(p);
+ else if(curStu)renderStudentSessions(p);
+ else if(curClass&&archMode==="cls")renderStudentList(p);
+ else renderStudentIndex(p);
+}
+function archHome(){curClass=null;curStu=null;curSession=null;renderArchive()}
+function archClass(id){
+ if(id&&role==="admin"&&clsOf(id).owner!==user)logAct("管理员查看班级档案",clsOf(id).name);
+ curClass=id;curStu=null;curSession=null;renderArchive();
+}
+function archStudent(id){
+ var s=stu(id);
+ logAct("查看学员档案",(curStu?"":"")+s.name);
+ curStu=id;curSession=null;renderArchive();
+}
+function archSession(s){
+ logAct("查看课堂记录",stu(curStu).name+" / "+s.date+" "+s.courseName);
+ curSession=s;renderArchive();
+}
+/* ================= v0.6 学员管理 ================= */
+function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function uname(){var a=ACCOUNTS.filter(function(x){return x.u===user})[0];return a?a.name:user}
+function today(){return new Date().toLocaleDateString("zh-CN")}
+function nowISO(){return new Date().toISOString()}
+function nowStr(){return new Date().toLocaleString("zh-CN")}
+function activeStudents(){return visibleStudents().filter(function(s){return s.status!=="已删除"})}
+function deletedStudents(){return visibleStudents().filter(function(s){return s.status==="已删除"})}
+function classesOf(stuId){
+ var out=[],cs=DB.classes;
+ for(var i=0;i<cs.length;i++){
+  var m=cs[i].memberIds||[];
+  for(var j=0;j<m.length;j++){if(m[j]===stuId){out.push(cs[i]);break}}
+ }
+ return out;
+}
+
+/* ---- 通用弹窗 ---- */
+function closeDlg(){var d=document.getElementById("dlgHost");if(d&&d.parentNode)d.parentNode.removeChild(d)}
+function openDlg(title,hint,body,okText,onOk,isDanger){
+ closeDlg();
+ var host=el("div","dlg");host.id="dlgHost";
+ var box=el("div","box");
+ box.appendChild(el("h3","",title));
+ if(hint)box.appendChild(el("p","hint",hint));
+ box.appendChild(body);
+ var foot=el("div","foot");
+ var c=el("button","btn sm g","取消");c.onclick=closeDlg;
+ var ok=el("button","btn sm"+(isDanger?" t":""),okText||"确定");
+ ok.onclick=function(){if(onOk&&onOk()===false)return;closeDlg()};
+ foot.appendChild(c);foot.appendChild(ok);box.appendChild(foot);
+ host.appendChild(box);document.body.appendChild(host);
+ host.onclick=function(e){if(e.target===host)closeDlg()};
+ return box;
+}
+
+/* ---- 改名：不新建档案 ---- */
+function renameStudent(sid){
+ var s=stu(sid);if(!s)return;
+ var body=el("div");
+ body.appendChild(el("label","","现在的名字"));
+ var inp=el("input");inp.value=s.name;body.appendChild(inp);
+ body.appendChild(el("label","","板书上可能出现的写法（逗号分隔，可留空）"));
+ var al=el("input");al.value=(s.alias||[]).join("，");body.appendChild(al);
+ body.appendChild(el("p","subtle","改名<b>不会</b>新建档案：已有的 "+sessionsOfStudent(sid).length+" 节课记录、学情总结、年度快照全部跟过来，旧名字记在「曾用名」里可查。"+
+  ((s.nameHistory||[]).length?"<br>曾用名："+s.nameHistory.map(function(h){return esc(h.old)}).join(" / "):"")));
+ openDlg("给「"+esc(s.name)+"」改名","",body,"保存改名",function(){
+  var nn=inp.value.trim();
+  if(!nn){alert("名字不能为空。\n不来了的孩子请用「删除」，不要清空名字。");return false}
+  var aliasArr=al.value.split(/[,，、]/).map(function(x){return x.trim()}).filter(Boolean);
+  if(nn===s.name){s.alias=aliasArr;save();renderArchive();return true}
+  var dup=DB.students.filter(function(x){return x.id!==sid&&x.name===nn&&x.status!=="已删除"})[0];
+  if(dup){alert("已经有一个叫「"+nn+"」的学员。\n如果是同一个人，请写进别名；确实重名就在名字后加区分，比如「"+nn+"（小二）」。");return false}
+  var oldName=s.name;
+  s.nameHistory=s.nameHistory||[];
+  s.nameHistory.push({old:oldName,nw:nn,at:today(),by:uname()});
+  if(REC[oldName]&&!REC[sid])REC[sid]=REC[oldName];
+  if(RADAR[oldName]&&!RADAR[sid])RADAR[sid]=RADAR[oldName];
+  if(DB.recs&&DB.recs[oldName]&&!DB.recs[sid]){DB.recs[sid]=DB.recs[oldName];delete DB.recs[oldName]}
+  s.name=nn;s.alias=aliasArr;
+  save();logAct("学员改名",oldName+" → "+nn);renderArchive();return true;
+ });
+}
+
+/* ---- 班级与补课：加入 / 转班 / 补课 是三件事 ---- */
+function moveDialog(sid){
+ var s=stu(sid);if(!s)return;
+ var cur=classesOf(sid);
+ var body=el("div");
+ body.appendChild(el("p","hint","现在在："+(cur.length?cur.map(function(c){return esc(c.name)+'（板书写作「'+esc(boardNameIn(c,s))+'」）'}).join("；"):"还没有班级")+
+  "<br>一个孩子可以同时上两个班。<b>加入</b>是并存，<b>转班</b>是退出旧班，别搞混。"));
+
+ /* ① 加入另一个班（多班并存） */
+ body.appendChild(el("label","","① 加入另一个班（原来的班保留）"));
+ var pick=el("select");
+ var p0=el("option","","— 选择要加入的班级 —");p0.value="";pick.appendChild(p0);
+ visibleClasses().filter(function(c){return (c.memberIds||[]).indexOf(sid)<0}).forEach(function(c){
+  var o=el("option","",c.name+"（"+c.grade+"）");o.value=c.id;pick.appendChild(o)});
+ body.appendChild(pick);
+ body.appendChild(el("label","","在这个班，板书上写成什么（留空 = 与姓名相同）"));
+ var bn=el("input");bn.placeholder=s.name;body.appendChild(bn);
+ var ab=el("button","btn sm","加入这个班");ab.style.marginTop="8px";
+ ab.onclick=function(){
+  if(!pick.value){alert("先选班级");return}
+  var c=clsOf(pick.value);
+  joinClass(c,sid,bn.value.trim());
+  closeDlg();renderArchive();
+  alert("已加入「"+c.name+"」。\n他和原来的班同时存在，两边的课都会进他的档案。");
+ };
+ body.appendChild(ab);
+
+ /* ② 转班：从某班退出，进另一个班 */
+ body.appendChild(el("label","","② 转班（从这个班退出，进另一个班）"));
+ if(!cur.length){
+  body.appendChild(el("p","subtle","他目前不在任何班，用上面的「加入」就行。"));
+ }else{
+  var fromSel=el("select");
+  cur.forEach(function(c){var o=el("option","",c.name+"（"+c.grade+"）");o.value=c.id;fromSel.appendChild(o)});
+  body.appendChild(fromSel);
+  var toSel=el("select");
+  var t0=el("option","","— 转到哪个班 —");t0.value="";toSel.appendChild(t0);
+  visibleClasses().filter(function(c){return (c.memberIds||[]).indexOf(sid)<0}).forEach(function(c){
+   var o=el("option","",c.name+"（"+c.grade+"）");o.value=c.id;toSel.appendChild(o)});
+  body.appendChild(toSel);
+  var tb=el("button","btn sm g","转班");tb.style.marginTop="8px";
+  tb.onclick=function(){
+   if(!toSel.value){alert("先选目标班级");return}
+   var from=clsOf(fromSel.value),to=clsOf(toSel.value);
+   transferClass(sid,from,to);
+   closeDlg();renderArchive();
+   alert("已从「"+from.name+"」转到「"+to.name+"」。\n旧班上过的课不会丢，仍算他的课堂记录。");
+  };
+  body.appendChild(tb);
+  body.appendChild(el("p","subtle","如果是「周中上一个班、周末还上一个」，用①加入，别用转班——转班会让旧班从名单里消失。"));
+ }
+
+ /* ③ 单次补课 */
+ body.appendChild(el("label","","③ 单次补课（只算这一节，班级归属不变）"));
+ var ss=el("select");
+ var o2=el("option","","— 选择课次 —");o2.value="";ss.appendChild(o2);
+ DB.sessions.slice().sort(function(a,b){return a.date<b.date?1:-1}).filter(function(x){return (x.guestIds||[]).indexOf(sid)<0}).slice(0,40).forEach(function(x){
+  var c=clsOf(x.classId);
+  var o=el("option","",x.date+" · "+x.courseName+" · "+(c?c.name:"—"));o.value=x.id;ss.appendChild(o);
+ });
+ body.appendChild(ss);
+ var gb=el("button","btn sm","加入这一节");gb.style.marginTop="8px";
+ gb.onclick=function(){
+  if(!ss.value){alert("先选课次");return}
+  var x=DB.sessions.filter(function(y){return y.id===ss.value})[0];
+  guestToSession(sid,ss.value);
+  closeDlg();renderArchive();
+  alert("已把「"+s.name+"」加进 "+x.date+" 这节课。\n他只出现在这一节的名单里，班级归属不变。");
+ };
+ body.appendChild(gb);
+
+ if((s.transfers||[]).length){
+  body.appendChild(el("label","","转班历史"));
+  body.appendChild(el("div","subtle",s.transfers.map(function(t){return t.date+"　"+esc(t.from)+" → "+esc(t.to)+"（"+esc(t.by)+"）"}).join("<br>")));
+ }
+ openDlg("班级与补课 —— "+esc(s.name),"",body,"关闭",function(){renderArchive()});
+}
+
+/* ---- 三个动作：加班 / 转班 / 补课（弹窗只负责收集参数） ---- */
+// 加进另一个班，原来的班保留（多班并存）。boardName 只在这个班生效。
+function joinClass(c,sid,boardName){
+ var s=stu(sid);if(!c||!s)return false;
+ c.memberIds=c.memberIds||[];
+ // 已经在班里就只更新板书名，别把入班日期重置了——否则补录的历史课会全部被挡住
+ var was=c.memberIds.indexOf(sid)>-1;
+ if(!was)c.memberIds.push(sid);
+ if(!was){
+  c.joinDates=c.joinDates||{};c.joinDates[sid]=today();
+  c.joinStamps=c.joinStamps||{};c.joinStamps[sid]=nowISO();
+ }
+ c.formerIds=(c.formerIds||[]).filter(function(i){return i!==sid});
+ var nm=(boardName||"").trim();
+ if(nm&&nm!==s.name){c.boardNames=c.boardNames||{};c.boardNames[sid]=nm}
+ save();logAct("学员加入班级",s.name+" → "+c.name+(nm&&nm!==s.name?"（板书 "+nm+"）":""));
+ return true;
+}
+// 从一个班退出、进另一个班。只动这两个班，其他班不动。
+function transferClass(sid,from,to){
+ var s=stu(sid);if(!s||!from||!to||from.id===to.id)return false;
+ var i=(from.memberIds||[]).indexOf(sid);
+ if(i>-1){
+  from.memberIds.splice(i,1);
+  from.formerIds=from.formerIds||[];
+  if(from.formerIds.indexOf(sid)<0)from.formerIds.push(sid);
+ }
+ to.memberIds=to.memberIds||[];
+ if(to.memberIds.indexOf(sid)<0)to.memberIds.push(sid);
+ to.joinDates=to.joinDates||{};to.joinDates[sid]=today();
+ to.joinStamps=to.joinStamps||{};to.joinStamps[sid]=nowISO();
+ s.transfers=s.transfers||[];
+ s.transfers.push({from:from.name,to:to.name,date:today(),by:uname()});
+ save();logAct("学员转班",s.name+" / "+from.name+" → "+to.name);
+ return true;
+}
+// 只把这个人加进某一节课的名单，班级归属不动
+function guestToSession(sid,sessionId){
+ var s=stu(sid);
+ var x=DB.sessions.filter(function(y){return y.id===sessionId})[0];
+ if(!s||!x)return false;
+ x.guestIds=x.guestIds||[];
+ if(x.guestIds.indexOf(sid)<0)x.guestIds.push(sid);
+ save();logAct("学员补课",s.name+" / "+x.date+" "+x.courseName);
+ return true;
+}
+
+/* ---- 结课 / 复课：不删除，只是不再占名单 ---- */
+function gradeOutDialog(sid){
+ var s=stu(sid);if(!s)return;
+ var cs=classesOf(sid);
+ var body=el("div");
+ body.appendChild(el("div","hint","<b>已结课</b>不等于删除：<br>"+
+  "· 他从班级名单、选人列表里退出，不再占位置；<br>"+
+  "· "+sessionsOfStudent(sid).length+" 节课记录、学情总结、年度快照全部保留，随时能查；<br>"+
+  "· 以后回来上 A1，一键「复课」就回来了。"));
+ body.appendChild(el("p","subtle","现在的班："+(cs.length?cs.map(function(c){return esc(c.name)}).join("、"):"—")+
+  "。结课后这些班的名单里不再显示他，但历史记录仍归他。"));
+ openDlg("把「"+esc(s.name)+"」标记为已结课？","",body,"确认结课",function(){
+  s.status="已结课";s.gradedAt=today();s.gradedBy=uname();
+  save();logAct("学员结课",s.name);renderArchive();return true;
+ });
+}
+function ungradeStudent(sid){
+ var s=stu(sid);if(!s)return;
+ s.status="在读";s.regradedAt=nowStr();
+ save();logAct("学员复课",s.name);renderArchive();
+}
+
+/* ---- 移出班级：记录保留 ---- */
+function leaveDialog(sid){
+ var s=stu(sid);if(!s)return;
+ var cur=classesOf(sid);
+ if(!cur.length){alert("这个学员当前不在任何班级");return}
+ var body=el("div");
+ body.appendChild(el("p","hint","移出后他不再出现在该班名单和选人列表里，但<b>已有的课堂记录不会丢</b>——记录挂在人身上，不挂在班牌上。"));
+ var chk=[];
+ cur.forEach(function(c){
+  var lab=el("label","");
+  var cb=document.createElement("input");cb.type="checkbox";cb.checked=true;
+  cb.style.width="auto";cb.style.marginRight="6px";
+  lab.appendChild(cb);lab.appendChild(document.createTextNode(c.name+"（"+membersOf(c).length+" 人）"));
+  body.appendChild(lab);chk.push({c:c,cb:cb});
+ });
+ openDlg("移出班级 —— "+esc(s.name),"",body,"确认移出",function(){
+  var n=0;
+  chk.forEach(function(o){
+   if(!o.cb.checked)return;
+   var i=o.c.memberIds.indexOf(sid);
+   if(i>-1){o.c.memberIds.splice(i,1);o.c.formerIds=o.c.formerIds||[];if(o.c.formerIds.indexOf(sid)<0)o.c.formerIds.push(sid);n++}
+  });
+  if(!n){alert("没有勾选任何班级");return false}
+  save();logAct("学员移出班级",s.name+" / "+n+" 个班");renderArchive();return true;
+ });
+}
+
+/* ---- 删除：软删除进回收站 ---- */
+function delDialog(sid){
+ var s=stu(sid);if(!s)return;
+ var cnt=sessionsOfStudent(sid).length;
+ var reps=DB.reports.filter(function(x){return x.studentId===sid}).length;
+ var body=el("div");
+ body.appendChild(el("div","warn",'<b>删除 = 进回收站，不是销毁</b><br>'+
+  '· 他会从班级名单、选人列表里消失；<br>'+
+  '· <b>'+cnt+' 节课记录、'+reps+' 次学情总结、年度快照都会保留</b>，在「回收站」里随时能恢复；<br>'+
+  '· 只是想换个班，用「转班」；只是不想他出现在这个班，用「移出班级」。'));
+ var lab=el("label","");
+ var cb=document.createElement("input");cb.type="checkbox";
+ cb.style.width="auto";cb.style.marginRight="6px";
+ lab.appendChild(cb);lab.appendChild(document.createTextNode("我确认移到回收站，知道可以恢复"));
+ body.appendChild(lab);
+ openDlg("删除「"+esc(s.name)+"」？","",body,"移到回收站",function(){
+  if(!cb.checked){alert("请先勾选确认");return false}
+  s.prevStatus=(s.status==="已结课"?"已结课":"在读");
+  s.status="已删除";s.deletedAt=nowStr();s.deletedBy=uname();
+  DB.classes.forEach(function(c){
+   var i=(c.memberIds||[]).indexOf(sid);
+   if(i>-1){c.memberIds.splice(i,1);c.formerIds=c.formerIds||[];if(c.formerIds.indexOf(sid)<0)c.formerIds.push(sid)}
+  });
+  save();logAct("删除学员（可恢复）",s.name);renderArchive();return true;
+ },true);
+}
+function restoreStudent(sid){
+ var s=stu(sid);if(!s)return;
+ s.status=(s.prevStatus==="已结课"?"已结课":"在读");s.restoredAt=nowStr();s.deletedAt=null;
+ save();logAct("恢复学员",s.name);renderArchive();
+}
+function purgeStudent(sid){
+ var s=stu(sid);if(!s)return;
+ if(role!=="admin"){alert("只有管理员可以彻底删除");return}
+ var cnt=sessionsOfStudent(sid).length;
+ var body=el("div");
+ body.appendChild(el("div","warn",'<b>彻底删除不可恢复</b><br>学员实体将从系统移除。'+cnt+' 节课的识别结果与总结留档作为历史数据保留，但这个人不再出现。'));
+ body.appendChild(el("label","","输入他的名字以确认"));
+ var inp=el("input");inp.placeholder=s.name;body.appendChild(inp);
+ openDlg("彻底删除「"+esc(s.name)+"」","",body,"彻底删除",function(){
+  if(inp.value.trim()!==s.name){alert("名字不一致，已取消");return false}
+  DB.students=DB.students.filter(function(x){return x.id!==sid});
+  DB.classes.forEach(function(c){
+   c.memberIds=(c.memberIds||[]).filter(function(i){return i!==sid});
+   c.formerIds=(c.formerIds||[]).filter(function(i){return i!==sid});
+  });
+  save();logAct("彻底删除学员",s.name);renderArchive();return true;
+ },true);
+}
+
+/* ---- 学员行 ---- */
+function stuOps(s){
+ var bar=el("div","ops");
+ function btn(txt,cls,fn){var b=el("button",cls||"",txt);b.onclick=function(ev){ev.stopPropagation();fn()};bar.appendChild(b)}
+ btn("打开档案",function(){archStudent(s.id)});
+ btn("改名",function(){renameStudent(s.id)});
+ btn("班级 / 补课",function(){moveDialog(s.id)});
+ if(s.status==="已结课")btn("复课",function(){ungradeStudent(s.id)});
+ else btn("结课",function(){gradeOutDialog(s.id)});
+ btn("移出班级",function(){leaveDialog(s.id)});
+ btn("删除","danger",function(){delDialog(s.id)});
+ return bar;
+}
+function stuRow(s){
+ var cnt=sessionsOfStudent(s.id).length,ab=absentOf(s.id).length;
+ var cs=classesOf(s.id);
+ var it=el("div","item");
+ var sub="";
+ if(s.alias&&s.alias.length)sub+='<div class="muted">板书别名：'+s.alias.map(esc).join(" / ")+'</div>';
+ if(s.nameHistory&&s.nameHistory.length)sub+='<div class="hist">曾用名：'+s.nameHistory.map(function(h){return esc(h.old)}).join(" / ")+'</div>';
+ if((s.transfers||[]).length){var t=s.transfers[s.transfers.length-1];sub+='<div class="hist">最近转班：'+t.date+' '+esc(t.from)+' → '+esc(t.to)+'</div>'}
+ // 同一个孩子可能挂两个班，各班板书上写成什么，分别标出来
+ var ctags=cs.map(function(c){
+  var bn=boardNameIn(c,s);
+  return '<span class="tag">'+esc(c.name)+(bn!==s.name?' · 板书「'+esc(bn)+'」':"")+'</span>';
+ }).join("");
+ it.innerHTML='<div class="meta"><span class="who">'+esc(s.name)+'</span>'+
+  '<span class="tag p">'+(s.level||"L1")+'</span>'+
+  '<span class="tag">'+cnt+' 节课记录</span>'+
+  (ab?'<span class="tag a">缺勤 '+ab+'</span>':"")+
+  ctags+
+  (s.status==="已结课"?'<span class="tag a">已结课 '+(s.gradedAt||"")+'</span>':"")+'</div>'+sub;
+ var m=it.querySelector(".meta");m.style.cursor="pointer";
+ // 整张卡都能点：只让「改名/转班/删除」那排按钮自己处理点击
+ it.style.cursor="pointer";
+ it.onclick=function(ev){
+  if(ev&&ev.target&&ev.target.closest&&ev.target.closest(".ops"))return;
+  archStudent(s.id);
+ };
+ it.appendChild(stuOps(s));
+ return it;
+}
+
+/* ---- 新建学员 ---- */
+function newStuCard(){
+ var c=el("div","card");
+ c.innerHTML='<h2>新建学员</h2><p class="muted">姓名写老师认得的那个就行，跟板书一致最省事。新建会自动挂到一个班，档案从这里开始长。</p>';
+ var f=el("div","row");f.style.marginTop="12px";
+ var nm=el("input");nm.placeholder="学员姓名";
+ var al=el("input");al.placeholder="板书别名（逗号分隔，可留空）";
+ var bn2=el("input");bn2.placeholder="在本班的板书名（可留空）";
+ var cs=el("select");
+ var o0=el("option","","— 加入哪个班 —");o0.value="";cs.appendChild(o0);
+ visibleClasses().forEach(function(x){var o=el("option","",x.name+"（"+x.grade+"）");o.value=x.id;cs.appendChild(o)});
+ var lv=el("select");LVLS.forEach(function(x){var o=el("option","",x);o.value=x;lv.appendChild(o)});
+ var b=el("button","btn sm","新建并加入");
+ b.onclick=function(){
+  var n=nm.value.trim();
+  if(!n){alert("先写名字");return}
+  if(!cs.value){alert("选一个班级");return}
+  var ex=DB.students.filter(function(x){return x.name===n&&x.status!=="已删除"})[0];
+  if(ex){alert("已经有一个叫「"+n+"」的学员。\n· 同一个人 → 用「班级 / 补课」把他加进这个班，别重复建档；\n· 两个不同的孩子同名 → 在名字后加区分，比如「"+n+"（小二）」或「"+n+"（周五班）」。");return}
+  var id="st"+Date.now();
+  DB.students.push({id:id,name:n,alias:al.value.split(/[,，、]/).map(function(x){return x.trim()}).filter(Boolean),level:lv.value||"L1",status:"在读"});
+  var cc=clsOf(cs.value);cc.memberIds=cc.memberIds||[];cc.memberIds.push(id);
+  cc.joinDates=cc.joinDates||{};cc.joinDates[id]=today();
+  cc.joinStamps=cc.joinStamps||{};cc.joinStamps[id]=nowISO();
+  // 这个班板书上可能写成另一个名字（同班重名、或老师习惯的叫法）
+  var bnv=bn2.value.trim();
+  if(bnv&&bnv!==n){cc.boardNames=cc.boardNames||{};cc.boardNames[id]=bnv}
+  save();logAct("新建学员",cc.name+" / "+n+(bnv&&bnv!==n?"（板书 "+bnv+"）":""));renderArchive();
+ };
+ f.appendChild(nm);f.appendChild(al);f.appendChild(bn2);f.appendChild(cs);f.appendChild(lv);f.appendChild(b);
+ c.appendChild(f);
+ if(!visibleClasses().length)c.appendChild(el("p","subtle","还没有班级。先去「按班级」建一个班，再把学员放进去——顺序反了会建出没有班的孤儿档案。"));
+ return c;
+}
+
+/* ---- 学员管理主页 ---- */
+function renderStudentIndex(p){
+ var tabs=el("div","tabs");
+ [["stu","按学员"],["cls","按班级"],["bin","回收站"+(deletedStudents().length?"（"+deletedStudents().length+"）":"")]].forEach(function(t){
+  var b=el("button","tab"+(archMode===t[0]?" on":""),t[1]);
+  b.onclick=function(){archMode=t[0];renderArchive()};tabs.appendChild(b);
+ });
+ p.appendChild(tabs);
+ if(archMode==="bin"){renderBin(p);return}
+ if(archMode==="cls"){renderClassHome(p);return}
+ renderStuList(p);
+}
+function renderStuList(p){
+ var all=activeStudents();
+ var live=[],graded=[];
+ for(var i=0;i<all.length;i++){if(all[i].status==="已结课")graded.push(all[i]);else live.push(all[i])}
+ var head=el("div","card");
+ head.innerHTML='<h2>在读学员（'+live.length+'）</h2><p class="muted">档案挂在这个人身上：改名、转班、升学期、换老师，记录都不会断。一个孩子可以同时上两个班，两边的课都会进他的档案。删除只是进回收站，随时能恢复。</p>';
+ var box=el("div","list clist");
+ if(!live.length)box.appendChild(el("div","empty","还没有在读学员 (´･_･`) 先去「按班级」建一个班，再回来建学员。"));
+ live.forEach(function(s){box.appendChild(stuRow(s))});
+ head.appendChild(box);p.appendChild(head);
+
+ // 空库时给一条明确的入口：不用翻到回收站去找
+ if(!live.length&&!graded.length){
+  var em=el("div","card");
+  em.innerHTML='<h2>库里还没有数据</h2>'+
+   '<p class="muted">你可以从零开始建班、加人；也可以先载入一套<b>真实的示例</b>，把流程走一遍再决定怎么用。</p>'+
+   '<p class="muted">示例内容是赵博文老师的两个班：<b>周二19:20班</b>（S6《我叫杰克逊（上）》）与 <b>周一19:00班</b>（S5《只存在想象中的世界》），共 6 名学员、2 节课次，板书是按真实板书逐条录入的。</p>';
+  var sb=el("button","btn g","📦 载入这两个班的示例");
+  sb.style.marginTop="10px";
+  sb.onclick=function(){
+   var had=DB.students.length;
+   seedDemo();
+   if(!DB.students.length||DB.students.length===had)return;
+   renderArchive();
+  };
+  em.appendChild(sb);
+  p.appendChild(em);
+ }
+
+ if(graded.length){
+  var g=el("div","card");
+  g.innerHTML='<h2>已结课（'+graded.length+'）</h2><p class="muted">上完了、不再占名单，但档案一直在。回来上课时点「复课」即可。</p>';
+  var gb=el("div","list clist");
+  graded.forEach(function(s){gb.appendChild(stuRow(s))});
+  g.appendChild(gb);p.appendChild(g);
+ }
+ p.appendChild(newStuCard());
+}
+function renderBin(p){
+ var list=deletedStudents();
+ var c=el("div","card");
+ c.innerHTML='<h2>回收站（'+list.length+'）</h2><p class="muted">删除的学员在这里。档案没有销毁——恢复后一切照旧。彻底删除仅管理员可做。</p>';
+ var box=el("div","list clist");
+ if(!list.length)box.appendChild(el("div","empty","回收站是空的，很干净 ٩(๑•̀ω•́๑)۶"));
+ list.forEach(function(s){
+  var it=el("div","item bin");
+  it.innerHTML='<div class="meta"><span class="who">'+esc(s.name)+'</span>'+
+   '<span class="tag">'+sessionsOfStudent(s.id).length+' 节记录</span>'+
+   '<span class="tag a">'+(s.deletedAt||"")+' 删除</span>'+
+   '<span class="tag">'+(s.deletedBy||"")+'</span></div>';
+  var bar=el("div","ops");
+  var rb=el("button","","恢复");rb.onclick=function(){restoreStudent(s.id)};bar.appendChild(rb);
+  var ob=el("button","","查看档案");ob.onclick=function(){archStudent(s.id)};bar.appendChild(ob);
+  if(role==="admin"){var pb=el("button","danger","彻底删除");pb.onclick=function(){purgeStudent(s.id)};bar.appendChild(pb)}
+  it.appendChild(bar);box.appendChild(it);
+ });
+ c.appendChild(box);p.appendChild(c);
+}
+
+/* ---- 数据维护（从「回收站」搬出来的：清库这种重手操作不该挨着恢复按钮） ---- */
+function renderMaint(){
+ var p=document.getElementById("p_maint");p.innerHTML="";
+ p.appendChild(pageHead("🗂","数据维护","清库、载入示例这种操作，平时不该出现在手边。放在这里，用之前先看清楚。"));
+ var d=el("div","card",'<h2>当前库</h2>');
+ d.innerHTML+='<p class="muted">'+DB.students.length+' 名学员 · '+DB.classes.length+' 个班级 · '+DB.sessions.length+' 节课次 · '+DB.reports.length+' 次总结留档 · '+DB.snapshots.length+' 份年度快照。</p>';
+ var f=el("div","row");f.style.marginTop="14px";
+ if(role==="admin"){
+  var sd=el("button","btn sm g","载入示例数据（演示用）");
+  sd.onclick=function(){
+   if(!confirm("会向当前库追加一套示例学员与班级，用于演示界面。确定？"))return;
+   seedDemo();renderMaint();
+  };
+  var cl=el("button","btn sm t","清空全部数据");
+  cl.onclick=function(){
+   if(!confirm("将清空所有学员、班级、课次与总结留档，回收站一并清空。不可撤销，确定？"))return;
+   var pwd=DB.passwords;DB=blank();DB.passwords=pwd;save();renderMaint();alert("已清空 (・_・;)");
+  };
+  f.appendChild(sd);f.appendChild(cl);
+ } else {
+  f.appendChild(el("span","muted","只有管理员能清库或载入示例。"));
+ }
+ d.appendChild(f);
+ d.appendChild(el("p","subtle","示例数据来自 2 节真实板书的识别结果，只用于验证界面。正式使用前建议清空。"));
+ p.appendChild(d);
+
+ var r=el("div","card",'<h2>回收站</h2><p class="muted">删除的学员不在这里，在「学员档案 → 回收站」里。删除只进回收站，可以恢复；彻底删除仅管理员可做。</p>');
+ p.appendChild(r);
+ var s2=el("div","card",'<h2>数据在哪</h2><p class="muted">原型阶段数据存在这台电脑的浏览器里（localStorage），换电脑、换浏览器、清缓存都会丢。正式版会放到服务器上，登录后各老师看各自的班。</p>');
+ p.appendChild(s2);
+}
+
+/* ---- 班级视图 ---- */
+function renderClassHome(p){
+ var head2=el("div","card");
+ head2.innerHTML='<h2>班级</h2><p class="muted">'+(role==="admin"?"管理员：可见全部班级（查看会留痕）":"教师：仅显示本人班级")+'</p>';
+ var b2=el("div","list clist"),vs=visibleClasses();
+ if(!vs.length)b2.appendChild(el("div","empty","还没有班级。管理员可以在下面建一个。"));
+ vs.forEach(function(c){
+  var it=el("div","item");
+  it.innerHTML='<div class="meta"><span class="who">'+esc(c.name)+'</span><span class="tag">'+c.grade+'</span>'+
+   '<span class="tag p">在读 '+membersOf(c).length+' 人</span>'+
+   ((c.formerIds||[]).length?'<span class="tag">曾在本班 '+(c.formerIds||[]).length+'</span>':"")+
+   (role==="admin"?'<span class="tag a">归属：'+(ACCOUNTS.filter(function(a){return a.u===c.owner})[0]||{name:"—"}).name+'</span>':"")+'</div>';
+  var m=it.querySelector(".meta");m.style.cursor="pointer";m.onclick=function(){archClass(c.id)};
+  var bar=el("div","ops");
+  var vb=el("button","","打开名单");vb.onclick=function(){archClass(c.id)};bar.appendChild(vb);
+  var rn=el("button","","班级改名");rn.onclick=function(){
+   var body=el("div");
+   body.appendChild(el("label","","班级名称"));
+   var i=el("input");i.value=c.name;body.appendChild(i);
+   body.appendChild(el("label","","学期"));
+   var sel=el("select");COURSE_ARCHIVE.forEach(function(g){var o=el("option","",g.grade);o.value=g.sem;if(g.sem===c.sem)o.selected=true;sel.appendChild(o)});
+   body.appendChild(sel);
+   openDlg("班级设置","",body,"保存",function(){
+    var n=i.value.trim();if(!n){alert("班级名不能为空");return false}
+    c.name=n;c.sem=sel.value;c.grade=gradeOfSem(sel.value);
+    save();logAct("班级改名",n);renderArchive();return true;
+   });
+  };bar.appendChild(rn);
+  if(role==="admin"){
+   var db=el("button","danger","删除班级");db.onclick=function(){
+    var ppl=allMembersOf(c).length;
+    if(ppl){alert("班里还有 "+ppl+" 名学员（含已结课），先把他们转走或移出，再删班。\n直接删班会让人失去班级归属，档案虽然还在，但很难找回来。");return}
+    // 课次挂在班级上：班没了，这些课就从所有人的档案里读不出来了，所以直接拦住
+    var sc=DB.sessions.filter(function(x){return x.classId===c.id}).length;
+    if(sc){alert("这个班有 "+sc+" 节课次记录，不能删。\n课次是靠班级定位的，班删掉之后这些课会从学员档案里消失。\n\n如果只是不想再用了，建议把班名改成「（已停用）"+c.name+"」，历史照样能查。");return}
+    openDlg("删除班级「"+esc(c.name)+"」","",el("p","hint","这个班没有学员、也没有课次，删除不影响任何人的档案。"),"删除",function(){
+     DB.classes=DB.classes.filter(function(x){return x.id!==c.id});
+     save();logAct("删除班级",c.name);renderArchive();return true;
+    },true);
+   };bar.appendChild(db);
+  }
+  it.appendChild(bar);b2.appendChild(it);
+ });
+ head2.appendChild(b2);
+ if(role==="admin"){
+  var f=el("div","row");f.style.marginTop="12px";
+  var inp=el("input");inp.placeholder="新班级名，如 周五19:00班";
+  var gs=el("select");COURSE_ARCHIVE.forEach(function(g){var o=el("option","",g.grade);o.value=g.sem;gs.appendChild(o)});
+  var os=el("select");ACCOUNTS.forEach(function(a){var o=el("option","",a.name);o.value=a.u;os.appendChild(o)});
+  var btn=el("button","btn sm","建班");
+  btn.onclick=function(){var n=inp.value.trim();if(!n)return;
+   DB.classes.push({id:"c"+Date.now(),name:n,sem:gs.value,grade:gradeOfSem(gs.value),owner:os.value,formerIds:[],memberIds:[],joinDates:{}});save();
+   logAct("建班",n);renderArchive()};
+  f.appendChild(inp);f.appendChild(gs);f.appendChild(os);f.appendChild(btn);head2.appendChild(f);
+ }
+ p.appendChild(head2);
+}
+
+/* ---- 班级内名单 ---- */
+function renderStudentList(p){
+ var c=clsOf(curClass);
+ var graded=gradedOutOf(c);
+ var head=el("div","card",'<h2>'+esc(c.name)+' · 在读学员（'+membersOf(c).length+'）</h2>'+
+  '<p class="muted">'+c.grade+' · 从这里加人、移人、往别的班转。板书上写成什么名字，按班各记一份，不会和别的班串。</p>');
+ var box=el("div","list clist");
+ membersOf(c).forEach(function(s){box.appendChild(stuRow(s))});
+ if(!membersOf(c).length)box.appendChild(el("div","empty","本班还没有在读学员"));
+ head.appendChild(box);
+ if(graded.length){
+  head.appendChild(el("p","subtle","已结课 "+graded.length+" 人（不占名单，档案还在）："+graded.map(function(s){return esc(s.name)}).join("、")));
+ }
+
+ var f=el("div","row");f.style.marginTop="12px";
+ var pick=el("select");
+ pick.appendChild(el("option","","— 从已有学员加入（不新建档案）—"));
+ DB.students.filter(function(s){return s.status!=="已删除"&&(c.memberIds||[]).indexOf(s.id)<0}).forEach(function(s){
+  var o=el("option","",s.name);o.value=s.id;pick.appendChild(o)});
+ var bn3=el("input");bn3.placeholder="在本班的板书名（可留空）";
+ var ab=el("button","btn sm g","加入本班");
+ ab.onclick=function(){
+  if(!pick.value)return;
+  var s=stu(pick.value);
+  c.memberIds=c.memberIds||[];if(c.memberIds.indexOf(s.id)<0)c.memberIds.push(s.id);
+  c.joinDates=c.joinDates||{};c.joinDates[s.id]=today();
+  c.joinStamps=c.joinStamps||{};c.joinStamps[s.id]=nowISO();
+  c.formerIds=(c.formerIds||[]).filter(function(i){return i!==s.id});
+  var bnv=bn3.value.trim();
+  if(bnv&&bnv!==s.name){c.boardNames=c.boardNames||{};c.boardNames[s.id]=bnv}
+  save();logAct("学员加入班级",c.name+" / "+s.name+(bnv&&bnv!==s.name?"（板书 "+bnv+"）":""));renderArchive();
+ };
+ f.appendChild(pick);f.appendChild(bn3);f.appendChild(ab);head.appendChild(f);
+ head.appendChild(el("p","subtle","这里只做「把已有的人加进来」，他原来的班保留（多班并存）。真正的新学员请到「按学员」页新建——在班里直接建容易给同一个孩子建出第二份档案。<br>板书名只在这个班生效：同一个孩子周中班写「朵朵」、周末班写「朵朵A」，两边的识别各认各的。"));
+ p.appendChild(head);
+}
+
+/* ---- 单个学员档案 ---- */
+function renderStudentSessions(p){
+ var s=stu(curStu),r=recOf(s),ss=sessionsOfStudent(s.id),ab=absentOf(s.id);
+ var head=el("div","card");
+ var myCs=classesOf(s.id);
+ head.innerHTML='<h2>'+esc(s.name)+' <span class="tag p">'+(s.level||"L1")+'</span>'+
+  (s.status==="已结课"?'<span class="tag a">已结课 '+(s.gradedAt||"")+'</span>':"")+'</h2>'+
+  '<p class="muted">共 '+ss.length+' 节课记录'+(ab.length?' · 缺勤 '+ab.length+' 次（不计入观察机会）':'')+'</p>'+
+  (myCs.length?'<p class="muted">'+(s.status==="已结课"?"结课时所在的班":"在册班级")+'：'+myCs.map(function(c){var bn=boardNameIn(c,s);return esc(c.name)+(bn!==s.name?'（板书写作「'+esc(bn)+'」）':"")}).join("；")+'</p>':'<p class="muted">当前不在任何班</p>')+
+  ((s.nameHistory||[]).length?'<p class="hist">曾用名：'+s.nameHistory.map(function(h){return esc(h.old)}).join(" / ")+'</p>':"");
+ var ops=el("div","ops");
+ var rn=el("button","","改名");rn.onclick=function(){renameStudent(s.id)};ops.appendChild(rn);
+ var mv=el("button","","班级 / 补课");mv.onclick=function(){moveDialog(s.id)};ops.appendChild(mv);
+ if(s.status==="已结课"){var ug=el("button","","复课");ug.onclick=function(){ungradeStudent(s.id)};ops.appendChild(ug)}
+ else{var gb=el("button","","结课");gb.onclick=function(){gradeOutDialog(s.id)};ops.appendChild(gb)}
+ var lv=el("button","","删除");lv.className="danger";lv.onclick=function(){delDialog(s.id)};ops.appendChild(lv);
+ head.appendChild(ops);
+
+ var box=el("div","list clist");box.style.marginTop="12px";
+ if(!ss.length)box.appendChild(el("div","empty","还没有课堂记录 (´･ω･`) 上完课传一次板书，这里就有了"));
+ ss.forEach(function(x){
+  var c=clsOf(x.classId);
+  var isGuest=(x.guestIds||[]).indexOf(s.id)>-1;
+  var it=el("div","item");
+  it.innerHTML='<div class="meta"><span class="who">'+x.date+'</span><span class="tag p">'+esc(x.courseName)+'</span>'+
+   '<span class="tag">'+esc(c?c.name:"—")+'</span>'+(isGuest?'<span class="tag a">补课</span>':"")+'</div>';
+  it.onclick=function(){archSession(x)};box.appendChild(it);
+ });
+ head.appendChild(box);
+
+ var f=el("div","row");f.style.marginTop="14px";
+ f.appendChild(el("span","muted","看最近"));
+ var sel=el("select");
+ SCOPES.forEach(function(x){var o=el("option","",x.label);o.value=x.n;if(x.n===repScope)o.selected=true;sel.appendChild(o)});
+ var btn=el("button","btn sm","生成学情总结");
+ btn.onclick=function(){repScope=+sel.value;logAct("生成学情总结",s.name+" / 近"+repScope+"节");genReport(s.id,repScope);repTab="in";go("p_report")};
+ var sb=el("button","btn sm g","生成年度快照");
+ sb.onclick=function(){makeSnapshot(s.id)};
+ f.appendChild(sel);f.appendChild(btn);f.appendChild(sb);head.appendChild(f);
+ head.appendChild(el("p","muted","按<b>最近 N 节有记录的课</b>读取，不按自然月——缺课不会把窗口拉长。"));
+ p.appendChild(head);
+
+ // 注意顺序：先挂进页面再画，否则 getElementById 拿不到容器
+ var dc=dimCard(s);
+ p.appendChild(dc);
+ radar(radarOf(s),null,"radar_stu");
+
+ var sns=DB.snapshots.filter(function(x){return x.studentId===s.id});
+ var sc2=el("div","card",'<h2>年度快照（长期保留）</h2>');
+ if(!sns.length)sc2.appendChild(el("p","muted","还没有快照。年度快照只保存 Level、八维与代表性原话，体积极小，用于保住跨年轨迹。"));
+ else{
+  var lb=el("div","list");
+  sns.forEach(function(x){
+   lb.appendChild(el("div","item",'<div class="meta"><span class="who">'+x.year+' 学年</span><span class="tag p">'+x.lv+'</span><span class="tag t">'+x.dims.join("-")+'</span><span class="muted">'+x.by+' · '+x.at+'</span></div>'+
+    '<div class="quote">'+x.quotes.join("<br>")+'</div>'));
+  });
+  sc2.appendChild(lb);
+ }
+ p.appendChild(sc2);
+
+ var reps=DB.reports.filter(function(x){return x.studentId===s.id});
+ var rc=el("div","card",'<h2>总结留档（'+reps.length+' 次）</h2>');
+ if(!reps.length)rc.appendChild(el("p","muted","还没有生成过学情总结。"));
+ else{
+  var tb=el("table");
+  tb.innerHTML='<tr><th>生成时间</th><th>范围</th><th>覆盖课次</th><th>状态</th><th>签发人</th></tr>'+
+   reps.map(function(x){return '<tr><td>'+x.at+'</td><td>'+x.scope+'</td><td>'+x.covered+' 节</td><td>'+
+    '<span class="tag '+(x.status==="已发送"?"t":(x.status==="已签发"?"p":"a"))+'">'+x.status+'</span></td><td>'+(x.by||"—")+'</td></tr>'}).join("");
+  rc.appendChild(tb);
+ }
+ p.appendChild(rc);
+}
+
+function makeSnapshot(sid){
+ var s=stu(sid);if(!s){alert("该学员暂无数据");return}
+ var y=prompt("学年（如 2026-2027）：","2026-2027");if(!y)return;
+ var der=deriveSignals(sid,sessionsOfStudent(sid));
+ var qs=der.dims.filter(function(a){return !a.obsOnly}).slice(0,3).map(function(a){
+  return "· "+a.d+"（"+a.tags.join("、")+"）："+a.ev[0].q; });
+ if(!qs.length)qs=["（本学年暂无可用原话证据）"];
+ DB.snapshots.push({id:"k"+Date.now(),studentId:sid,name:s.name,year:y,lv:s.level||"L1",
+  dims:radarOf(s),
+  quotes:qs,
+  by:ACCOUNTS.filter(function(a){return a.u===user})[0].name,at:new Date().toLocaleDateString("zh-CN")});
+ save();logAct("生成年度快照",s.name+" / "+y);renderArchive();
+}
+function renderSessionDetail(p){
+ var s=curSession;
+ var card=el("div","card",'<h2>'+s.date+' · '+s.courseName+'</h2>');
+ var co=courseById(s.courseId);
+ if(co){
+  var g=el("div","ok",'<b>课程目标（档案库）·</b> '+(co.goal||"未录")+
+   (co.tasks?'<br><b>核心问题链 ·</b> '+co.tasks:""));
+  card.appendChild(g);
+ }
+ var es=entriesOf(s);
+ if(!es.length){
+  card.appendChild(el("p","muted","（这节课还没有识别结果 (・_・)）"));
+  p.appendChild(card);return;
+ }
+ var tl=topicsOf(es);
+ var wasAbsent=(s.absent||[]).indexOf(curStu)>-1;
+ if(wasAbsent)card.appendChild(el("p","muted","· 本节课记为<b>缺勤</b>，不计入观察机会。"));
+
+ tl.forEach(function(t,ti){
+  var sec=el("div","tgrp2");
+  var st=el("div","tgh2");
+  var ppl={};t.items.forEach(function(e){if(e.who!=="教师")ppl[e.who]=1});
+  st.innerHTML='<span class="tn">'+(ti+1)+'</span><b>'+esc(t.topic)+'</b><span class="tc">'+Object.keys(ppl).length+' 人发言</span>';
+  sec.appendChild(st);
+  var box=el("div","list");
+  t.items.forEach(function(x){
+   box.appendChild(el("div","item"+(x.who==="教师"?" teacher":"")+(x.dim?" dim":""),
+    '<div class="meta"><span class="who">'+esc(x.who)+'</span>'+
+    (x.tag?'<span class="tag '+(x.dim?"a":(x.who==="教师"?"":"p"))+'">'+esc(x.tag)+'</span>':"")+
+    (x.stage?'<span class="tag t">'+esc(x.stage)+'</span>':"")+'</div><div class="quote">'+esc(x.text)+'</div>'));
+  });
+  sec.appendChild(box);card.appendChild(sec);
+ });
+ p.appendChild(card);
+
+ var me=stu(curStu);
+ if(me){
+  var mine=es.filter(whoIsIn(clsOf(s.classId),me));
+  var c2=el("div","card",'<h2>'+esc(me.name)+' 本节课</h2>');
+  if(!mine.length)c2.appendChild(el("p","muted",wasAbsent?"本节课缺勤。":"本节课没有可辨认的发言（可能是没被叫到，不等于不会）。"));
+  else{
+   topicsOf(mine).forEach(function(t){
+    c2.appendChild(el("div","tgh2",'<b>'+esc(t.topic)+'</b>'));
+    var b2=el("div","list");
+    t.items.forEach(function(x){b2.appendChild(el("div","item",'<div class="quote">'+esc(x.text)+'</div>'))});
+    c2.appendChild(b2);
+   });
+   // 本课维度信号（从原话推导）
+   var sigs=[];
+   mine.forEach(function(e){
+    signalsOf(e).forEach(function(g){g.date=s.date;g.course=s.courseName;sigs.push(g)});
+   });
+   if(sigs.length){
+    var dedup={},list=[];
+    sigs.forEach(function(g){
+     var k=g.d+(g.obs?"·obs":"");
+     if(dedup[k])return;dedup[k]=1;list.push(g);
+    });
+    var c3=el("div","card",'<h2>本节课维度信号（规则初判 · 待你确认）</h2>');
+    var b3=el("div","list");
+    list.forEach(function(g){
+     b3.appendChild(el("div","item",'<div class="meta"><span class="who">'+g.d+'</span>'+
+      '<span class="tag p">'+g.tag+'</span>'+
+      (g.obs?'<span class="tag t">框架后·只观察</span>':"")+'</div><div class="quote">「'+esc(g.q)+'」</div>'));
+    });
+    c3.appendChild(b3);
+    c3.appendChild(el("p","muted","这不是打分，是「这句话命中了哪个维度」的规则初判。你可以逐条否定——否定的记录会成为以后校准规则的依据。"));
+    p.appendChild(c3);
+   }
+  }
+  p.appendChild(c2);
+ }
+}
+
+/* ---------- 八维与 Level（常驻学员档案，不再单开一页） ---------- */
+function dimCard(s){
+ var ss=sessionsOfStudent(s.id),ab=absentOf(s.id);
+ var c=el("div","card");
+ c.appendChild(el("h2","","八维信号"));
+ c.appendChild(el("p","muted","从这 "+ss.length+" 节课的原话里推出来，每条都能翻回原句。"+
+  (ab.length?" 缺勤 "+ab.length+" 次已从观察机会里剔除。":"")+
+  " 带「·」的轴是本窗口观察机会不足，贴着中心画，<b>不代表能力低</b>。"));
+
+ var box=el("div","row");box.style.alignItems="flex-start";box.style.marginTop="10px";
+ var left=el("div");left.style.flex="1";left.style.minWidth="290px";
+ var rv=el("div");rv.id="radar_stu";left.appendChild(rv);
+ left.appendChild(el("p","muted","实线＝本窗口信号；虚线＝上一份年度快照。给家长看趋势，不给绝对值。"));
+
+ var right=el("div");right.style.width="240px";right.style.flex="0 0 240px";
+ right.appendChild(el("h3","","Level"));
+ right.appendChild(el("p","muted","现在是 "+(s.level||"L1")+"，由三档换算得来，你可以直接改。可升可降，下降只记在教师侧，不给孩子看。"));
+ var sel=el("select");sel.id="lvSel";
+ LVLS.forEach(function(l){var o=el("option","",l);o.value=l;if(l===(s.level||"L1"))o.selected=true;sel.appendChild(o)});
+ sel.style.width="100%";sel.style.marginTop="8px";
+ right.appendChild(sel);
+ var sv=el("button","btn sm","保存 Level");sv.style.marginTop="9px";
+ sv.onclick=function(){
+  s.level=sel.value;save();
+  logAct("调整Level",s.name+" → "+s.level);
+  alert("已保存：Level "+s.level+"  (๑•̀ㅂ•́)و✧");
+ };
+ right.appendChild(sv);
+ box.appendChild(left);box.appendChild(right);
+ c.appendChild(box);
+ return c;
+}
+function radar(base,prev,hostId){
+ if(typeof base==="string")base=radarOf(stu(base)||{name:base,id:base});
+ if(!base||!base.length)base=[0,0,0,0,0,0,0,0];
+ // 0 = 观察机会不足：贴着中心画，不假装成"很低"
+ var now=base.map(function(v){return v>0?Math.max(v,0.8):0.35});
+ var n=8,cx=160,cy=150,R=100;
+ function pts(arr){return arr.map(function(v,i){var a=-Math.PI/2+i*2*Math.PI/n,r=R*v/8;
+  return (cx+r*Math.cos(a)).toFixed(1)+","+(cy+r*Math.sin(a)).toFixed(1)}).join(" ")}
+ var axes="";
+ for(var i=0;i<n;i++){var a=-Math.PI/2+i*2*Math.PI/n;
+  axes+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+R*Math.cos(a)).toFixed(1)+'" y2="'+(cy+R*Math.sin(a)).toFixed(1)+'" stroke="#EAE6DD"/>';
+  var noData=base[i]===0;
+  axes+='<text x="'+(cx+(R+16)*Math.cos(a)).toFixed(1)+'" y="'+(cy+(R+16)*Math.sin(a)).toFixed(1)+'" font-size="10" fill="'+(noData?"#C6C1B6":"#8E9399")+'" text-anchor="middle">D'+(i+1)+(noData?"·":"")+'</text>';}
+ for(var k=2;k<=8;k+=2){var rr=R*k/8,poly=[];for(var j=0;j<n;j++){var a2=-Math.PI/2+j*2*Math.PI/n;poly.push((cx+rr*Math.cos(a2)).toFixed(1)+","+(cy+rr*Math.sin(a2)).toFixed(1))}
+  axes+='<polygon points="'+poly.join(" ")+'" fill="none" stroke="#F0EDE6"/>';}
+ var svg=axes;
+ if(prev)svg+='<polygon points="'+pts(prev)+'" fill="none" stroke="#B9B4A8" stroke-dasharray="4 3"/>';
+ svg+='<polygon points="'+pts(now)+'" fill="rgba(62,82,115,.13)" stroke="#3E5273" stroke-width="1.4"/>';
+ var elx=document.getElementById(hostId||"radar");
+ if(elx)elx.innerHTML='<svg viewBox="0 0 320 300" width="100%" style="max-width:330px">'+svg+'</svg>';
+}
+
+/* ---------- 学情与家长版（两步：内部版 → 家长版） ---------- */
+var repTab="in";      // in | pa
+var draftText="";     // 草稿要活过页面重绘，否则一点「生成」跳过来就空了
+var transIn="";       // 送进家长转译器的内部版
+
+function renderReport(){
+ var p=document.getElementById("p_report");p.innerHTML="";
+ p.appendChild(pageHead("💬","学情与家长版","第一步读内部版，第二步转成家长能听懂的话。两步都得你亲手过一遍。"));
+
+ var steps=el("div","steps");
+ [["in","①","内部版 · 给自己看"],["pa","②","家长版 · 发出去"]].forEach(function(x){
+  var b=el("div","step"+(repTab===x[0]?" on":""),'<span class="sn">'+x[1]+'</span>'+x[2]);
+  b.onclick=function(){
+   // 直接点第二步也要把刚才写的东西带过去，不能逼人回去按按钮
+   if(x[0]==="pa"){
+    var d=document.getElementById("draft");
+    if(d&&d.value.trim())transIn=d.value;
+   }
+   repTab=x[0];renderReport();
+  };
+  steps.appendChild(b);
+ });
+ p.appendChild(steps);
+
+ var cont=el("div");
+ p.appendChild(cont);
+ if(repTab==="pa")renderParent(cont);
+ else renderReportInternal(cont);
+}
+
+function renderReportInternal(p){
+ var c=el("div","card",'<h2>读哪一段</h2><p class="muted">选一个学员、一个窗口，读最近 N 节。<b>按有记录的课次</b>算，不按自然月——缺课不会把窗口拉长。</p>');
+ var f=el("div","row");f.style.marginTop="12px";
+ var ss=el("select");ss.id="repStu";
+ activeStudents().forEach(function(s){
+  var o=el("option","",s.name+(s.status==="已结课"?"（已结课）":""));
+  o.value=s.id;if(s.id===curStu)o.selected=true;ss.appendChild(o);
+ });
+ var sel=el("select");
+ SCOPES.forEach(function(x){var o=el("option","",x.label);o.value=x.n;if(x.n===repScope)o.selected=true;sel.appendChild(o)});
+ var btn=el("button","btn g","生成草稿");
+ var ta=el("textarea");ta.id="draft";ta.placeholder="点「生成草稿」就有了 (｡･ω･｡)";
+ ta.value=draftText;
+ ta.oninput=function(){draftText=ta.value};
+ if(!activeStudents().length){ss.appendChild(el("option","","（还没有学员）"))}
+ btn.onclick=function(){
+  var who=stu(ss.value);if(!who){alert("先建一个学员");return}
+  repScope=+sel.value;curStu=who.id;
+  logAct("生成学情总结",who.name+" / 近"+repScope+"节");
+  genReport(who.id,repScope);
+ };
+ f.appendChild(ss);f.appendChild(sel);f.appendChild(btn);
+ c.appendChild(f);c.appendChild(ta);
+
+ var f2=el("div","row");f2.style.marginTop="14px";f2.style.alignItems="center";
+ f2.innerHTML='<label style="font-size:13px;color:var(--text2);display:flex;gap:6px;align-items:center"><input type="checkbox" id="ck"> 我已审阅、修改并补充了建议</label>';
+ var sign=el("button","btn","签发（内部版）");sign.disabled=true;
+ var toP=el("button","btn t","② 转成家长版 →");
+ f2.appendChild(sign);f2.appendChild(toP);
+ c.appendChild(f2);
+ c.appendChild(el("p","subtle","签发＝留档，留档后学员档案里能看到第几次总结。发给家长前，还要过第二步转译。"));
+ p.appendChild(c);
+
+ p.appendChild(el("div","warn",'<b>边界提醒 ·</b> 内部版可以写 Level 与八维；<b>家长版不出现任何编号</b>，也不做孩子之间的比较。置灰维度是观察机会不足，不得写成短板。'));
+
+ document.getElementById("ck").onchange=function(){sign.disabled=!this.checked};
+ sign.onclick=function(){
+  var txt=document.getElementById("draft").value;
+  if(!txt){alert("先点上面的「生成草稿」");return}
+  var s=stu(ss.value);
+  DB.reports.push({id:"r"+Date.now(),studentId:s.id,scope:"近"+repScope+"节",
+   covered:sessionsOfStudent(s.id).slice(0,repScope).length,status:"已签发",
+   by:ACCOUNTS.filter(function(a){return a.u===user})[0].name,
+   at:new Date().toLocaleString("zh-CN"),internal:txt});
+  save();logAct("签发学情总结",s.name+" / 近"+repScope+"节");
+  alert("已签发并留档 ✧ 学员档案里能看到这一次");
+ };
+ toP.onclick=function(){
+  var txt=document.getElementById("draft").value;
+  if(!txt){alert("先点上面的「生成草稿」");return}
+  transIn=txt;repTab="pa";renderReport();
+ };
+}
+
+/* 第二步：家长版。能力不变，只是不再单开一页——它本来就只跟在上一步后面用一次。 */
+function renderParent(p){
+ var c=el("div","card",'<h2>'+TRANS.name+' <span class="tag a">'+TRANS.ver+'</span></h2>'+
+  '<p class="muted">独立润色模型：输入你签发过的内部版，输出家长能看懂的话。可以单独调试这一个模型，不影响其它环节。</p>');
+ var back=el("button","btn g","← 回到内部版");
+ back.onclick=function(){repTab="in";renderReport()};
+ var bar0=el("div","row");bar0.style.marginTop="10px";bar0.appendChild(back);
+ c.appendChild(bar0);
+
+ c.appendChild(el("label","fl","输入（内部版总结）"));
+ var inA=el("textarea");inA.id="tr_in";inA.value=transIn;
+ inA.placeholder="从第一步点「转成家长版」会自动填进来，也可以直接粘贴";
+ c.appendChild(inA);
+
+ var f=el("div","row");f.style.marginTop="12px";
+ var btn=el("button","btn t","转译成家长版");
+ var cp=el("button","btn g","复制结果");
+ btn.onclick=function(){
+  var src=document.getElementById("tr_in").value;
+  if(!src.trim()){alert("先填入内部版内容 (・_・)");return}
+  transIn=src;
+  var res=toParent(src);
+  document.getElementById("tr_out").value=res;
+  logAct("家长转译",stu(curStu)?stu(curStu).name:"（手动粘贴）");
+ };
+ cp.onclick=function(){
+  var t=document.getElementById("tr_out");if(!t.value){alert("还没有结果");return}
+  t.select();document.execCommand("copy");alert("已复制 ✧ 发之前自己再读一遍");
+ };
+ f.appendChild(btn);f.appendChild(cp);
+ c.appendChild(f);
+
+ c.appendChild(el("label","fl","输出（家长版）"));
+ var outA=el("textarea");outA.id="tr_out";outA.placeholder="点上面的按钮生成";
+ outA.style.minHeight="210px";
+ c.appendChild(outA);
+ p.appendChild(c);
+
+ var rules=el("details","grp");
+ rules.appendChild(el("summary","","这个模型的规则（可直接改，单独调）"));
+ var rb=el("div","body");
+ var pp=el("textarea");pp.value=TRANS.prompt;pp.style.minHeight="200px";
+ rb.appendChild(pp);
+ var sv=el("button","btn sm","保存规则");sv.style.marginTop="10px";
+ sv.onclick=function(){TRANS.prompt=pp.value;save();logAct("修改转译器规则","—");alert("已保存（原型：仅本机）")};
+ rb.appendChild(sv);
+ rb.appendChild(el("div","tips","<b>为什么单独做一层 ·</b> 内部版写的是 Level 和八维，家长看不懂也容易焦虑；直接让主模型改写，容易把术语带出去。单独一层可以把「怎么跟家长说话」当成一个可独立迭代的部件。"));
+ rules.appendChild(rb);
+ p.appendChild(rules);
+ p.appendChild(el('div','warn','<b>红线 ·</b> 家长版不出现 Level、D1-D8、「高于/低于/置灰」；不做孩子之间的比较；置灰不得写成短板；每条判断必须带一句孩子的原话。'));
+}
+function genReport(sid,n){
+ var s=stu(sid);if(!s)return;
+ var all=sessionsOfStudent(sid),use=all.slice(0,n);
+ var text="【"+s.name+" · 最近 "+use.length+" 节课 学情总结（内部版草稿）】\n";
+ text+="\n〇、本次读取的课次（按日期倒序）\n";
+ use.forEach(function(x,i){
+  var c=clsOf(x.classId);
+  text+="  "+(i+1)+". "+x.date+" · "+x.courseName+"（"+(c?c.name:"—")+"）\n";
+ });
+ if(use.length<all.length)text+="  （共 "+all.length+" 节记录，本窗口取最近 "+use.length+" 节）\n";
+ var ab=absentOf(sid);
+ if(ab.length)text+="  缺勤 "+ab.length+" 次，已从观察机会中剔除。\n";
+ if(use.length<3){
+  text+="\n⚠ 样本提醒：本窗口只有 "+use.length+" 节记录，任何结论都可能是偶然。\n";
+  text+="  建议先用于你自己回看，暂不作为对家长的判断依据（累积到 3 节以上再给家长）。\n";
+ }
+
+ text+="\n一、课程目标 vs 学生回答（逐课对照）\n";
+ use.forEach(function(x){
+  var co=courseById(x.courseId);
+  var es=entriesOf(x).filter(whoIsIn(clsOf(x.classId),s));
+  text+="· "+x.date+"《"+x.courseName+"》\n";
+  var goal=(co&&co.goal?co.goal:"（该课档案未录目标）").replace(/\s+/g," ").trim();
+  if(goal.length>90)goal=goal.slice(0,90)+"……";
+  text+="  课程目标："+goal+"\n";
+  if(!es.length){text+="  学生原话：（本课没有该生可辨认的发言）\n";text+="  对照结论：待教师判断\n";return}
+  // 编号必须跟全课一致：只看该生的发言会把「话题3」错标成「话题2」
+  topicsOf(entriesOf(x)).forEach(function(t,ti){
+   var sub=t.items.filter(whoIsIn(clsOf(x.classId),s));
+   if(!sub.length)return;
+   text+="  话题"+(ti+1)+" · "+t.topic+"\n";
+   sub.forEach(function(e){
+    var one=e.text.replace(/\s+/g," ");
+    text+="    · "+(e.stage?"["+e.stage+"] ":"")+one+"\n";
+   });
+  });
+  text+="  对照结论：待教师判断（AI 不代替你下这个结论）\n";
+ });
+
+ text+="\n二、话题参与（沉默比说得多更值得看）\n";
+ var seatIn={};
+ use.forEach(function(x){
+  var c=clsOf(x.classId);
+  (c?(c.memberIds||[]):[]).forEach(function(id){
+   var m=stu(id);
+   if(m&&m.status!=="已删除")seatIn[m.name]=(seatIn[m.name]||0);
+  });
+ });
+ use.forEach(function(x){
+  var all2=entriesOf(x);
+  var tl=topicsOf(all2);
+  text+="· "+x.date+"："+tl.length+" 个话题\n";
+  // 整节课都没说过话的人，只按「全课」算一次
+  var spokeAll={};
+  all2.forEach(function(e){if(e.who!=="教师")spokeAll[e.who]=1});
+  var silentAll=Object.keys(seatIn).filter(function(w){return !spokeAll[w]});
+  tl.forEach(function(t,ti){
+   var said={};t.items.forEach(function(e){if(e.who!=="教师")said[e.who]=(said[e.who]||0)+1});
+   var me=said[s.name]||0;
+   var others=Object.keys(said).filter(function(w){return w!==s.name});
+   text+="  话题"+(ti+1)+" · "+t.topic+" ｜ "+s.name+"："+(me?me+" 条":"未发言")+
+        (others.length?"（同话题 "+others.join("、")+" 有发言）":"")+"\n";
+  });
+  if(silentAll.length)text+="  → 本课全程未发言："+silentAll.join("、")+"（可能是没被叫到，不等于不会）\n";
+ });
+
+ var der=deriveSignals(sid,use);
+ text+="\n三、维度信号（从原话推导 · 待你确认）\n";
+ if(!der.dims.length){
+  text+="· 本窗口没有可用的原话证据，八维全部记为「观察机会不足」，不写短板。\n";
+ }else{
+  var noHit=[];
+  DIMS.forEach(function(d){
+   var a=der.dims.filter(function(x){return x.d===d})[0];
+   if(!a){noHit.push(d);return}
+   text+="· "+d+"　"+(a.obsOnly?"只观察（发言在框架后，不用于升级）":"命中 "+a.n+" 次 · "+a.tags.join("、")+(a.n>a.ev.length?"（下列 "+a.ev.length+" 条为证）":""))+"\n";
+   a.ev.forEach(function(ev){
+    text+="    「"+ev.q+"」"+(ev.obs?"（框架后）":"")+"　— "+ev.date+"《"+ev.course+"》\n";
+   });
+  });
+  if(noHit.length)text+="· 观察机会不足（本窗口没出现，不是短板）："+noHit.map(function(d){return d.replace(/^D\d /,"")}).join("、")+"\n";
+  text+="→ 当前 Level："+(s.level||"—")+"（可升可降，由你改。规则初判只做提示，不做决定。）\n";
+ }
+
+ var sns=DB.snapshots.filter(function(x){return x.studentId===sid});
+ if(sns.length)text+="\n四、年度快照（长期保留）\n"+sns.map(function(x){return "· "+x.year+"："+x.lv+" · 八维 "+x.dims.join("-")}).join("\n")+"\n";
+
+ text+="\n"+(sns.length?"五":"四")+"、需要你补的两句\n· 这个孩子这段时间最想让你确认的一件事是什么？\n· 家庭可以配合做的一件小事是什么？\n";
+ text+="\n—— 本总结为草稿，删掉不认可的部分再签发。\n";
+ text+="   维度信号由规则引擎从原话命中推导（标注了证据句子），不是模型判断，也没有参考年级。\n";
+ // 草稿先存起来：此时「学情」页可能还没渲染，等它渲染时再填进去
+ draftText=text;
+ var ta=document.getElementById("draft");
+ if(ta)ta.value=text;
+}
+
+function dimCn(s){
+ s=(s||"").trim();if(!s)return"";
+ var hit=TRANS.map.filter(function(x){return x[0].indexOf(s)>-1||s.indexOf(x[0].replace(/^D\d\s*/,""))>-1})[0];
+ return hit?hit[1]:s;
+}
+function toParent(src){
+ // 原型：结构化解析内部版 → 重写成家长话术。接入模型后由 TRANS.prompt 驱动。
+ var lines=src.split("\n"),sec="",courses=[],quotes=[],topics=[],dims=[],hi="",lo="",gray="",absentN=0,name="";
+ var m0=src.match(/^【([^·]+)·/);
+ if(m0)name=m0[1].trim();
+ lines.forEach(function(raw){
+  var l=raw.trim();if(!l)return;
+  // 按标题文字识别小节，不按序号——内部版增减一节就不会全错位
+  if(/^[〇一二三四五六七八九十]+、/.test(l)){
+   if(/维度信号/.test(l))sec="dim";
+   else if(/逐课对照|课程目标/.test(l))sec="course";
+   else if(/话题参与/.test(l))sec="topic";
+   else if(/年度快照/.test(l))sec="snap";
+   else if(/需要你补/.test(l))sec="end";
+   else if(/本次读取/.test(l))sec="list";
+   else sec="";
+   return;
+  }
+  if(sec==="list"){
+   if(/^缺勤/.test(l)){var a=l.match(/缺勤\s*(\d+)/);if(a)absentN=+a[1];return}
+   var m=l.match(/^\d+\.\s*(\d{4}-\d{2}-\d{2})\s*·\s*(.+?)（/);
+   if(m)courses.push(m[2].trim());
+  }
+  if(sec==="course"){
+   // 兼容两种内部版：旧版「学生原话：A / B」，新版「· [框架前] A」
+   var q0=l.match(/学生原话：(.+)/);
+   if(q0&&q0[1].indexOf("无该生")<0){
+    q0[1].split(" / ").forEach(function(x){
+     x=x.replace(/（[^）]*）/g,"").trim();
+     if(x&&x.length>8)quotes.push(x);
+    });
+   }
+   var q1=l.match(/^·\s*(?:\[框架[前后]\]\s*)?(.+)$/);
+   if(q1){
+    var txt=q1[1].replace(/（[^）]*）/g,"").trim();
+    var isMeta=/^\d{4}-\d{2}-\d{2}|^话题|^对照结论|^课程目标|^学生原话|^「?—」?$/.test(txt);
+    if(txt.length>12&&!isMeta)quotes.push(txt);
+   }
+   var tq=l.match(/^话题\d+\s*·\s*(.+)$/);
+   if(tq)topics.push(tq[1].trim());
+  }
+  if(sec==="dim"){
+   if(/^·\s*高于/.test(l))hi=l.replace(/^·\s*高于当前 Level：/,"").trim();
+   else if(/^·\s*低于/.test(l))lo=l.replace(/^·\s*低于当前 Level：/,"").trim();
+   else if(/观察机会不足/.test(l)){
+    var g=l.replace(/^.*？，?不是短板）：/,"").replace(/^·\s*观察机会不足[^：]*：/,"").trim();
+    if(g)gray=g;
+   }
+   var dm=l.match(/^·\s*D(\d)\s*([^\s　]*)　?(.*)$/);
+   if(dm&&/命中/.test(l)&&!/只观察/.test(l)){
+    var mm=l.match(/命中\s*(\d+)\s*次\s*·\s*(.+?)(（|$)/);
+    if(mm)dims.push({d:"D"+dm[1]+" "+dm[2].replace(/\s/g,""),n:+mm[1],tag:mm[2].trim()});
+    else dims.push({d:"D"+dm[1]+" "+dm[2].replace(/\s/g,""),n:1,tag:""});
+   }
+  }
+ });
+ var uniq=[];courses.forEach(function(c){if(uniq.indexOf(c)<0)uniq.push(c)});
+ var n=courses.length;
+ var hiCn=hi?hi.split("、").filter(function(x){return x&&x!=="暂无"}).map(dimCn):[];
+ var loCn=lo?lo.split("、").filter(function(x){return x&&x!=="暂无"}).map(function(x){return dimCn(x.replace(/（.*/,""))}):[];
+
+ if(!n&&!quotes.length){
+  // 兜底：任意文本，做术语清洗
+  var t=src.replace(/D\d\s*[^\s：:·，。]*/g,function(m){return dimCn(m)})
+   .replace(/Level\s*L?\d/gi,"").replace(/\bL[1-8]\b/g,"")
+   .replace(/高于当前|低于当前|置灰|观察机会不足|材料不足/g,"")
+   .replace(/^[〇一二三四五六七八九十]+、.*$/gm,"").replace(/\n{3,}/g,"\n\n").trim();
+  return "【这段时间的课堂情况】\n\n"+t.split("\n").filter(Boolean).slice(0,12).join("\n")+
+   "\n\n【建议家里可以做的】\n（这一句请老师自己写——家长最认这一句。）\n\n—— 由老师确认后发送。";
+ }
+
+ var out="【"+(name||"孩子")+" · 最近 "+n+" 节课】\n\n";
+ out+=(n<=1?"我们最近上了 ":"这段时间我们一共上了 ")+n+" 节课";
+ if(uniq.length){
+  var show=uniq.slice(0,3).map(function(c){return "「"+c+"」"}).join("、");
+  out+=(uniq.length>3?"，聊的话题包括"+show+"等。":"，聊的是"+show+"。");
+ }else out+="。";
+ out+="\n\n";
+ if(quotes.length){
+  out+="孩子在课上说过一句话，我印象比较深：\n";
+  out+="「"+quotes[0].slice(0,100)+(quotes[0].length>100?"……":"")+"」\n\n";
+ }
+ if(dims.length){
+  out+="这段时间我留意到的几点：\n";
+  // 只给家长白话，内部规则标签（"引入代价或反例"这类）一律不带出去
+  dims.sort(function(a,b){return b.n-a.n}).slice(0,3).forEach(function(x){
+   out+="· "+dimCn(x.d)+"\n";
+  });
+  out+="\n";
+ }else if(hiCn.length){
+  out+="这段时间我留意到的几点：\n"+hiCn.slice(0,3).map(function(x){return "· "+x}).join("\n")+"\n";
+ }
+ if(loCn.length){
+  out+="还想多给他机会练习的：\n"+loCn.slice(0,2).map(function(x){return "· "+x}).join("\n")+"\n";
+ }
+ if(!dims.length&&!hiCn.length&&!loCn.length&&quotes.length){
+  out+="这几节课他愿不愿意开口、开口时说到什么程度，我都还在看，不急着下结论。\n";
+ }
+ if(!quotes.length&&!dims.length){
+  out+="这几节课孩子的发言不多，我还在观察，暂时不急着下结论——孩子不是每节课都想说话，这很正常。\n";
+ }
+ if(absentN){
+  out+="\n（这期间有 "+absentN+" 次没来上课，我只按实际参与的课做了观察。）\n";
+ }
+ out+="\n【这个阶段可以试着做的一件小事】\n（这一句请老师自己写——家长最认这一句，别让 AI 代笔。）\n";
+ out+="\n—— 由老师确认后发送。";
+ return out;
+}
+
+/* ---------- 课程档案 ---------- */
+function renderCourse(){
+ var p=document.getElementById("p_course");p.innerHTML="";
+ p.appendChild(pageHead("📚","课程档案","备课和写总结时才需要翻。上传板书选课的时候，系统已经自动挑好学期和单元了。"));
+ var total=0;COURSE_ARCHIVE.forEach(function(g){g.units.forEach(function(u){total+=u.lessons.length})});
+ var c=el("div","card",'<h2>全部 '+total+' 节</h2>'+
+  '<p class="muted">学期 → 单元 → 课节。教学目标与核心问题链取自教案档案。待排、待开发、已废弃的课不在此列。</p>');
+ var box=el("div");box.style.marginTop="12px";
+ COURSE_ARCHIVE.forEach(function(g){
+  box.appendChild(el("div","sem",g.grade+"（"+g.units.reduce(function(a,u){return a+u.lessons.length},0)+" 节）"));
+  g.units.forEach(function(u){
+   var d=el("details","grp");
+   d.appendChild(el("summary","",u.unit+" · "+u.lessons.length+" 节"));
+   var bd=el("div","body");
+   u.lessons.forEach(function(l){
+    bd.appendChild(el("div","item",'<div class="meta"><span class="who">'+l.name+'</span><span class="tag p">'+l.id+'</span><span class="muted">'+l.pkg+'</span></div>'+
+     '<p><b style="color:var(--text)">教学目标：</b>'+(l.goal||"（教案未抽取到）")+'</p>'+
+     (l.tasks?'<p style="margin-top:4px"><b style="color:var(--text)">核心问题链：</b>'+l.tasks+'</p>':"")));
+   });
+   d.appendChild(bd);box.appendChild(d);
+  });
+ });
+ c.appendChild(box);p.appendChild(c);
+ p.appendChild(el("div","ok",'<b>数据留存 ·</b> 课堂板书与档案保留最近 '+RETENTION+' 个月；每年生成一份<b>年度快照</b>长期保存（Level + 八维 + 代表性原话），用于保住跨年长程轨迹。'));
+}
+
+/* ---------- 访问日志 ---------- */
+function renderLog(){
+ var p=document.getElementById("p_log");p.innerHTML="";
+ p.appendChild(pageHead("📜","访问日志","谁在什么时候看了谁的档案。管理员查看非本人班级、生成报告与签发都会留一条。"));
+ var c=el("div","card",'<h2>最近 60 条</h2><p class="muted">原型：记录保存在本机。</p>');
+ if(!DB.log.length){c.appendChild(el("div","empty","暂无记录 (・_・)"))}
+ else{
+  var t=el("table");
+  t.innerHTML='<tr><th>时间</th><th>账号</th><th>操作</th><th>对象</th></tr>'+
+   DB.log.slice(0,60).map(function(l){return '<tr><td>'+l.t+'</td><td>'+l.who+'</td><td>'+l.act+'</td><td>'+l.target+'</td></tr>'}).join("");
+  c.appendChild(t);
+ }
+ p.appendChild(c);
+}
+function buildAll(){buildUpload();renderArchive()}
+</script>
+</body>
+</html>
