@@ -1,4 +1,5 @@
-﻿_samples/
+_samples/
 _tests/
 node_modules/
 Thumbs.db
+*.bak_v*
