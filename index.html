@@ -181,6 +181,30 @@ label.fl{display:block;font-size:11.5px;color:var(--text3);margin:12px 0 4px;let
 /* ---------- 列表 / 标签 ---------- */
 .row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .tag{font-size:11px;padding:1px 8px;border-radius:5px;border:1px solid var(--line2);color:var(--text2);background:var(--card-soft);white-space:nowrap}
+/* 说明收进问号：界面上只留标题和按钮，鼠标停 / 键盘聚焦才展开。
+   留在界面上的长句大多是「为什么这么设计」，老师看第二遍就不看了，却一直占地方。 */.q{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;
+ border:1px solid var(--line2);color:var(--text3);font-size:10px;line-height:1;cursor:help;
+ position:relative;margin-left:6px;vertical-align:1px;background:var(--card-soft);font-weight:500}
+.q:hover,.q:focus{color:var(--p);border-color:var(--p);outline:none;background:#fff}
+.q::after{content:attr(data-tip);position:absolute;left:50%;bottom:135%;transform:translateX(-50%);
+ width:250px;max-width:66vw;background:#fff;color:var(--text2);border:1px solid var(--line2);border-radius:8px;
+ padding:8px 11px;font-size:12px;line-height:1.75;box-shadow:0 8px 22px rgba(0,0,0,.10);
+ opacity:0;pointer-events:none;transition:opacity .12s;z-index:80;white-space:pre-line;font-weight:400;text-align:left}
+.q:hover::after,.q:focus::after{opacity:1}
+.qr{float:right;margin-left:8px}
+/* 维度悬停浮层 */
+.dimtip{position:fixed;z-index:90;display:none;max-width:250px;background:#fff;border:1px solid var(--line2);
+ border-radius:9px;padding:9px 11px;font-size:12px;line-height:1.7;color:var(--text2);
+ box-shadow:0 10px 26px rgba(0,0,0,.12);pointer-events:none}
+.dimtip b{display:block;color:var(--text);font-size:12.5px;margin-bottom:3px}
+.dimtip .m{color:var(--text3);margin-top:5px;padding-top:5px;border-top:1px dashed var(--line)}
+/* 模型调用点一览：一眼看清哪几处会花钱 */
+.uses{margin-top:10px;border:1px dashed var(--line);border-radius:8px;padding:7px 11px;background:var(--card-soft)}
+.urow{display:flex;gap:10px;align-items:baseline;font-size:12px;padding:3.5px 0;color:var(--text3);border-bottom:1px dashed rgba(0,0,0,.04)}
+.urow:last-child{border-bottom:0}
+.urow b{color:var(--text2);font-weight:600;min-width:136px;flex:0 0 136px}
+.urow span{flex:1;min-width:0}
+.urow i{font-style:normal;font-size:11px;color:var(--text3);white-space:nowrap}
 .tag.p{background:var(--p-bg);border-color:var(--p-line);color:var(--p)}
 .tag.t{background:var(--t-bg);border-color:var(--t-line);color:var(--t)}
 .tag.a{background:var(--a-bg);border-color:var(--a-line);color:var(--a)}
@@ -339,6 +363,13 @@ th{color:var(--text3);font-weight:500;font-size:11.5px;letter-spacing:.3px}
 .less.edited{border-color:var(--p-line);background:var(--card)}
 .less.mine{border-left:3px solid var(--p-line)}
 .searchbox{width:170px;padding:4px 8px;font-size:12.5px;border-radius:20px}
+/* 一次性公告里的长清单：边界留在明面，操作细节折起来 */
+.more{margin-top:6px;border-top:1px dashed var(--line);padding-top:8px}
+.more summary{cursor:pointer;font-size:12px;color:var(--text3);padding:4px 0;list-style:none}
+.more summary::-webkit-details-marker{display:none}
+.more summary:hover{color:var(--p)}
+.more summary:before{content:"▸ ";color:var(--text3)}
+.more[open] summary:before{content:"▾ "}
 
 </style>
 <!-- PDF 解析：pdf.js 本地副本，离线也能读 PDF（找不到时上传页会给出提示，不报错） -->
@@ -355,7 +386,7 @@ th{color:var(--text3);font-weight:500;font-size:11.5px;letter-spacing:.3px}
     <div class="err" id="lerr"></div>
     <button class="btn" style="width:100%" onclick="doLogin()">登录</button>
     <label class="remember"><input type="checkbox" id="rm"> 记住账号和密码（公用电脑请勿勾选）</label>
-    <p class="login-ver">教师独立档案库 · <span class="verNum">v2.6</span> · 11-14</p>
+    <p class="login-ver">教师独立档案库 · <span class="verNum">v2.7</span> · 11-15</p>
   </div>
 </div>
 
@@ -381,6 +412,9 @@ th{color:var(--text3);font-weight:500;font-size:11.5px;letter-spacing:.3px}
       <li>孩子只说「两边都有道理」而没给出具体判断，<b>不会</b>被记为进步，会标为「待引导」。</li>
       <li>系统不做孩子之间的排名比较。</li>
       <li>发给家长的所有内容，必须由你<b>亲自审阅、修改并签发</b>后才会发出。</li>
+    </ul>
+    <details class="more"><summary>更多细节：数据存哪、课次管理、板书识别（点开）</summary>
+    <ul>
       <li><b>首课反馈</b>只有一节课的素材，所以它只谈「这个孩子怎么想」，不比等级、不谈趋势；板书里没有他的发言时，系统会<b>拒绝生成</b>，不会替他编一段话。</li>
       <li>课堂板书与档案保留<b>最近 11 个月</b>；每年生成一份<b>年度快照</b>长期保存，用于保留长程轨迹。</li>
       <li>数据存在<b>你用的这台电脑的浏览器里</b>：换电脑、换浏览器、清缓存、系统重装都会丢，回收站也救不回来。请每周在「数据维护」里导出一份备份。</li>
@@ -401,7 +435,7 @@ th{color:var(--text3);font-weight:500;font-size:11.5px;letter-spacing:.3px}
       <li>课次可以<b>单节删除</b>：点开这一节，最下面有「删除这一节课的记录」，只删这一班这一天的这一节，其他课次不受影响。</li>
       <li>板书识别分两种：<b>没配模型时</b>只有 3 节示例课能出内容，其它课要你在「补录原话」里敲几行；<b>配了模型后</b>（数据维护 → 板书识别）才会真的读图，板书照片会发给你选的那家服务商，返回的每条原话仍需你逐条核对。</li>
       <li>示例课的板书原话本来就<b>存在库里</b>，导出的备份里带着原话，不是只剩骨架。</li>
-    </ul>
+    </ul></details>
     <div class="notice-foot">
       <button class="btn" style="width:100%" onclick="closeNotice()">我已了解</button>
       <button class="guide-btn" onclick="tourStart()">🐣 使用引导 <span>第一次用？让这只乌鸦带你走一遍，约 3 分钟</span></button>
@@ -461,6 +495,18 @@ var LVLS=["L1","L2","L3","L4","L5","L6","L7","L8"];
 var GRADES=["二年级","三年级","四年级","五年级","六年级"];
 var RETENTION=11;
 var DIMS=["D1 立场与开放","D2 分析与推导","D3 标准自觉","D4 例证能力","D5 收束与决断","D6 互动回应","D7 概念迁移","D8 问题生成"];
+// 八根轴各指什么：鼠标停在轴上看这几句。写短，是因为老师要一眼判断「这句算不算 D6」，
+// 说成长篇定义反而没人看。
+var DIM_DESC={
+ "D1 立场与开放":"能不能先接住对方的说法，再说自己的；听得进不同意见。",
+ "D2 分析与推导":"会不会把理由一步步推到结论，而不是只丢一个结论。",
+ "D3 标准自觉":"有没有说清「凭什么这么判断」——依据、标准、规则。",
+ "D4 例证能力":"举的例子具体不具体，能不能撑住自己的观点。",
+ "D5 收束与决断":"讨论到最后能不能给出自己的判断，而不是「都行」「不知道」。",
+ "D6 互动回应":"会不会接上一个人刚说的那句，而不是各说各的。",
+ "D7 概念迁移":"能不能把课上的概念用到别的场景、别的事情上。",
+ "D8 问题生成":"会不会自己提出新问题，而不只是回答老师问的。"
+};
 // 六档检索：按"最近 N 节有记录的课"读取，不按自然月
 // 前期密后期疏：3 节做首轮沟通，7/12 学期中，24/36/48 长程
 var SCOPES=[{n:3,label:"近 3 节"},{n:7,label:"近 7 节"},{n:12,label:"近 12 节"},
@@ -805,6 +851,37 @@ function deriveSignals(sid,sessions){
  return {dims:dims,note:""};
 }
 
+// 每个维度在本窗口有几条证据：悬停浮层要显示，光给定义看不出「这轴为空是因为没证据」
+function dimStats(sid){
+ var arr=[];for(var i=0;i<8;i++)arr.push({n:0,obsOnly:false});
+ var r=deriveSignals(sid,sessionsOfStudent(sid));
+ r.dims.forEach(function(a){var i=DIMS.indexOf(a.d);if(i<0)return;arr[i]={n:a.n,obsOnly:!!a.obsOnly}});
+ return arr;
+}
+function dimTooltip(host,stats){
+ var tip=document.getElementById("dimTip");
+ if(!tip){tip=el("div","dimtip");tip.id="dimTip";document.body.appendChild(tip)}
+ var nodes=host.querySelectorAll(".axh");
+ for(var k=0;k<nodes.length;k++)(function(node){
+  node.addEventListener("mouseenter",function(ev){
+   var i=+node.getAttribute("data-i"),st=(stats&&stats[i])||null;
+   var h="<b>"+esc(DIMS[i])+"</b>"+esc(DIM_DESC[DIMS[i]]||"");
+   if(st&&st.n)h+="<div class='m'>本窗口 "+st.n+" 条证据"+(st.obsOnly?"（只在别人说完后跟着说，按观察记）":"")+"</div>";
+   else h+="<div class='m'>本窗口没有证据：这轴贴中心画，<b>不代表能力低</b></div>";
+   tip.innerHTML=h;tip.style.display="block";dimTipMove(ev.clientX,ev.clientY);
+  });
+  node.addEventListener("mousemove",function(ev){dimTipMove(ev.clientX,ev.clientY)});
+  node.addEventListener("mouseleave",function(){var t=document.getElementById("dimTip");if(t)t.style.display="none"});
+ })(nodes[k]);
+}
+function dimTipMove(x,y){
+ var tip=document.getElementById("dimTip");if(!tip)return;
+ var w=tip.offsetWidth||240,h=tip.offsetHeight||90,left=x+14,top=y+14;
+ if(left+w>window.innerWidth-8)left=x-w-14;
+ if(top+h>window.innerHeight-8)top=y-h-14;
+ tip.style.left=left+"px";tip.style.top=top+"px";
+}
+
 // 八维雷达值：有老师确认过的记录用记录，否则用推导（0 表示观察机会不足）
 function radarFromDerive(sid){
  var arr=[0,0,0,0,0,0,0,0];
@@ -840,7 +917,7 @@ var RADAR={};
 var KEY="kq_archive_v10";
 var DB=load();
 applyCourseEdits();   // 把改过的课节补回课程库（函数在后文，声明会提升）
-function blank(){return {students:[],classes:[],sessions:[],passwords:{},log:[],snapshots:[],reports:[],courseEdits:{del:{},mod:{},add:[]},firstFeedbacks:{}}}
+function blank(){return {students:[],classes:[],sessions:[],passwords:{},log:[],snapshots:[],reports:[],courseEdits:{del:{},mod:{},add:[]},firstFeedbacks:{},scripts:{}}}
 function load(){
  try{
   var d=JSON.parse(localStorage.getItem(KEY));
@@ -872,6 +949,8 @@ function migrateDB(d){
   if(!Array.isArray(d[k]))d[k]=[];
  });
  if(!d.firstFeedbacks||typeof d.firstFeedbacks!=="object"||Array.isArray(d.firstFeedbacks))d.firstFeedbacks={};
+ // 三步沟通话术单独存：它只依赖某一节的原话，不依赖首课反馈是否已经写过
+ if(!d.scripts||typeof d.scripts!=="object"||Array.isArray(d.scripts))d.scripts={};
  if(!d.courseEdits||typeof d.courseEdits!=="object")d.courseEdits={del:{},mod:{},add:[]};
  // ① 年级统一成「S6 · 四年级下」。以前库里「四年级上」和「S3 · 三年级上」并存，
  //    显示时靠前端抹平；按字段筛选、导出核对时就露馅。
@@ -1370,6 +1449,194 @@ async function aiParent(src,home){
  return txt;
 }
 
+/* ---------- 三步沟通话术（只在第一次沟通用） ----------
+   和「家长版」不是一回事：家长版是 N 节课的通报，话术是第一次打完电话/发微信的开场。
+   所以素材只取一节课（首课），挑 3 个问题，每个问题「他说的 + 我看出的」，
+   最后落到一句具体建议和一个反问。老师会照着发，所以每句引文都要能对回板书。 */
+function scriptMessages(st,x){
+ var mat=materialOfSession(x,st).lines;
+ var nm=st.name;
+ var sys=[
+  "你是思辨课老师，要给刚上完第一节课的孩子家长发微信。这条消息由老师直接复制发出，所以用老师本人的口吻，不要客服腔。",
+  "",
+  "整条消息分三段，分别用 【一】【二】【三】 标出。除了这三个标记，不要任何解释、不要「以下是」。",
+  "",
+  "【一】只写开场寒暄，一句话都不许谈孩子的课堂表现。照这个意思写，不要换语气：",
+  "「"+nm+"妈妈，您好，咱孩子今天这节课体验完了以后有劳您帮我采访一下孩子感觉怎么样？[让我看看] 也不知道孩子身边有没有大人旁听，也想了解一下对咱们课程的看法和建议。」",
+  "（名字必须是「"+nm+"」；[让我看看] 必须原样保留。）",
+  "",
+  "【二】先一句话画像，再讲三个问题：",
+  "第一行写：「今天"+nm+"在课堂上的表现，可以用一句话来形容——」，后面接一句行为描述，例如「会先把几种可能摆出来，再挑一种去找反例」。不许出现「聪明」「表达能力强」「思维清晰」「逻辑好」「悟性高」这类评价词。",
+  "然后只挑 3 个问题，按材料里出现的先后顺序，用「一、」「二、」「三、」编号。每个问题写三句：",
+  "① 我们问到他……这个问题的时候（问题直接写出来，不加引号）",
+  "② 他是这么说的：他的原话，用「」括起来，逐字抄下来，一个字都不许改",
+  "③ 从这句话能看出他……（必须挂在这句原话上；不要每句都加「推测」，只有明显超出原话的推断才加）",
+  "",
+  "【三】两句：",
+  "① 我的建议是：以后遇到……的情况，您可以……（一个具体情境 + 一句能照做的做法，不说教、不列 123）",
+  "② 同时我注意到他在课上有一个习惯：……（写具体行为，不许用「不足 / 欠缺 / 弱 / 需要加强」这类词）您平时遇到这种情况是怎么做的？",
+  "",
+  "硬规则（违反任何一条都算写坏）：",
+  "1. 只用我给的材料。三句原话必须逐字来自材料里以「· 」开头的行；找不到就换一个问题，绝对不许改写、不许编。",
+  "2. 不出现等级、八维编号、课次编号、百分比、排名；不跟别的孩子比较；不推测家庭、成绩、性格。",
+  "3. 用孩子的名字，不用「他/她」（引原话时照原样）。",
+  "4. 全部口语，不要 markdown、不要「首先/其次/综上」。",
+  "5. 全文 500–800 字。"
+ ].join("\n");
+ var user="【孩子】"+nm+"\n【课】"+x.courseName+" · "+x.date+"\n【课堂材料】\n"+String(mat||"").slice(0,6000);
+ return [{role:"system",content:sys},{role:"user",content:user}];
+}
+/* 把模型返回的三段拆开。模型偶尔会多写「以下是…」这种开场，
+   拆不出来就整段当第二步，宁可让它显示得丑，也不丢内容。 */
+function splitScript(txt){
+ var t=String(txt||"").replace(/\r/g,"").trim().replace(/^```[a-z]*\n?|```$/g,"");
+ function cut(a,b){
+  var i=t.indexOf(a);if(i<0)return "";
+  var s=t.slice(i+a.length),j=b?s.indexOf(b):-1;
+  return (j<0?s:s.slice(0,j)).trim();
+ }
+ var o=cut("【一】","【二】"),b=cut("【二】","【三】"),ad=cut("【三】","");
+ if(!o&&!b&&!ad)return {open:"",body:t,advice:""};
+ return {open:o,body:b,advice:ad};
+}
+function scriptRaw(sc){
+ return "【一】\n"+String(sc&&sc.open||"")+"\n\n【二】\n"+String(sc&&sc.body||"")+"\n\n【三】\n"+String(sc&&sc.advice||"");
+}
+var scPending=null,scEditing=null,scEditText="";
+/* 首课 = 最早的、他真说过话的那一节。话术只取这一节，不掺「近 N 节」。
+   注意它不依赖首课反馈是否已经写过——老师想直接发一段话，不该被流程拦住。 */
+function scriptSessionOf(sid){
+ var ss=sessionsOfStudent(sid).slice().reverse();
+ for(var i=0;i<ss.length;i++){
+  var n=entriesOf(ss[i]).filter(whoIsIn(clsOf(ss[i].classId),stu(sid))).length;
+  if(n)return ss[i];
+ }
+ return null;
+}
+function scOf(sid){return (DB.scripts||{})[sid]||null}
+async function genScript(sid){
+ var s=stu(sid);if(!s)return;
+ var x=scriptSessionOf(sid);
+ if(!x){
+  alert("这几节课都没有"+s.name+"的发言记录。\n\n话术里的三句引文只能来自他真说过的话——先把板书补上，或确认板书上的称呼有没有对上。");
+  return;
+ }
+ var es=entriesOf(x).filter(whoIsIn(clsOf(x.classId),s));
+ var mine={sid:sid,at:Date.now()};
+ scPending=mine;renderArchive();
+ var txt="",err=null;
+ try{txt=await aiChat(scriptMessages(s,x),{maxTokens:1500,temperature:0.35,timeoutMs:120000})}
+ catch(e){err=e}
+ if(scPending!==mine)return;          // 期间切走了，别去改页面
+ scPending=null;
+ if(err){renderArchive();alert("话术没生成出来：\n"+String(err&&err.message||err));return}
+ var parts=splitScript(txt);
+ if(!String(parts.body||"").trim()){renderArchive();alert("模型这次没按格式返回，再点一次试试。");return}
+ DB.scripts=DB.scripts||{};
+ DB.scripts[sid]={sessionId:x.id,open:parts.open,body:parts.body,advice:parts.advice,
+  at:new Date().toLocaleString("zh-CN"),by:uname(),src:"ai",
+  anchor:anchorCheck([parts.open,parts.body,parts.advice].join("\n"),es)};
+ save();logAct("生成沟通话术",s.name+" / "+x.date);renderArchive();
+}
+
+/* ---------- 话术卡：独立一张，不挂在首课反馈里 ---------- */
+function scriptCard(s){
+ var c=el("div","card");
+ var h=el("h2","","发给家长 · 三步话术");
+ h.innerHTML+=qh("只在第一次沟通用：开场寒暄 → 挑三个问题逐条「他说的 + 我看出的」→ 给建议并反问家长。\n\n素材只取他第一次真说过话的那一节，不掺「近 N 节」。三句引文都对着板书逐字核过，核不上的会标出来。\n\n拆成三段，是让你按自己的节奏发，不是一条长消息砸过去。");
+ c.appendChild(h);
+ var x=scriptSessionOf(s.id);
+ if(!x){
+  c.appendChild(el("p","muted","这几节课都没有"+esc(s.name)+"的发言记录。话术里的引文只能来自他真说过的话——先补板书，或者确认板书上的称呼对不对。"));
+  return c;
+ }
+ if(scPending&&scPending.sid===s.id){
+  c.appendChild(el("p","muted","正在写，一般 20–40 秒…"));
+  return c;
+ }
+ var sc=scOf(s.id);
+ if(!sc){
+  var b=el("button","btn sm","生成三步话术");
+  b.onclick=function(){genScript(s.id)};
+  c.appendChild(b);
+  c.appendChild(el("p","muted","只取这一节："+esc(x.date)+" · "+esc(x.courseName)));
+  return c;
+ }
+ var anc=sc.anchor||{n:0,bad:[]};
+ c.appendChild(el("p","muted",(sc.src==="ai"?"模型成稿 · ":"")+
+  (anc.n?(anc.bad&&anc.bad.length?"<b style='color:#c0392b'>引文 "+anc.bad.length+" 句对不上板书</b>":"引文 "+anc.n+"/"+anc.n+" 句对得上板书"):"这一版没有引文")+
+  "　·　"+esc(sc.at||"")+" "+esc(sc.by||"")));
+
+ if(scEditing===s.id){
+  var ta=el("textarea");
+  ta.style.cssText="width:100%;min-height:420px;font-size:13px;line-height:1.85;padding:10px;box-sizing:border-box;margin-top:6px";
+  ta.value=scEditText;
+  c.appendChild(ta);
+  c.appendChild(el("p","muted","保留【一】【二】【三】三个标记，系统才拆得回三段。"));
+  var r=el("div","ops");
+  var sv=el("button","btn sm","保存");
+  sv.onclick=function(){
+   var parts=splitScript(ta.value),rec=scOf(s.id);
+   if(!rec)return;
+   rec.open=parts.open;rec.body=parts.body;rec.advice=parts.advice;
+   rec.edited=true;rec.at=new Date().toLocaleString("zh-CN");rec.by=uname();
+   var xs=scriptSessionOf(s.id);
+   var es=xs?entriesOf(xs).filter(whoIsIn(clsOf(xs.classId),s)):[];
+   rec.anchor=anchorCheck([parts.open,parts.body,parts.advice].join("\n"),es);
+   save();scEditing=null;logAct("改沟通话术",s.name);renderArchive();
+  };
+  var cx=el("button","btn sm g","取消");
+  cx.onclick=function(){scEditing=null;renderArchive()};
+  r.appendChild(sv);r.appendChild(cx);c.appendChild(r);
+  return c;
+ }
+
+ [["① 开场",sc.open],["② 具体介绍",sc.body],["③ 建议与反问",sc.advice]].forEach(function(y){
+  if(!String(y[1]||"").trim())return;
+  var box=el("div");
+  box.style.cssText="margin-top:10px;background:var(--card-soft);border-radius:8px;padding:10px 12px";
+  var top=el("div");
+  top.style.cssText="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px";
+  top.appendChild(el("span","muted",y[0]));
+  var cp=el("button","btn sm","复制");
+  cp.onclick=function(){
+   if(copyText(y[1])){cp.textContent="已复制";setTimeout(function(){cp.textContent="复制"},1600)}
+   else alert("这个浏览器不让自动复制。\n\n点「编辑」后手动选中也行。");
+  };
+  top.appendChild(cp);
+  box.appendChild(top);
+  var tx=el("div");
+  tx.style.cssText="white-space:pre-wrap;font-size:13px;line-height:1.9";
+  tx.textContent=y[1];
+  box.appendChild(tx);
+  c.appendChild(box);
+ });
+
+ if(anc.bad&&anc.bad.length){
+  c.appendChild(el("div","warn","这几句在板书里找不到原话，发之前改掉或删掉：<br>"+
+   anc.bad.map(function(q){return "「"+esc(q)+"」"}).join("<br>")));
+ }
+ var ops=el("div","ops");
+ var eb=el("button","","编辑");
+ eb.onclick=function(){scEditing=s.id;scEditText=scriptRaw(scOf(s.id));renderArchive()};
+ ops.appendChild(eb);
+ var ab=el("button","","全部复制");
+ ab.onclick=function(){
+  var all=[sc.open,sc.body,sc.advice].filter(function(t){return String(t||"").trim()}).join("\n\n");
+  if(copyText(all)){ab.textContent="已复制";setTimeout(function(){ab.textContent="全部复制"},1600)}
+  else alert("这个浏览器不让自动复制。");
+ };
+ ops.appendChild(ab);
+ var rb=el("button","","重新写");
+ rb.onclick=function(){
+  if(!confirm("重新写会覆盖这一版，改过的内容不留。\n\n确定？"))return;
+  scEditing=null;genScript(s.id);
+ };
+ ops.appendChild(rb);
+ c.appendChild(ops);
+ return c;
+}
+
 var user=null,role=null,curClass=null,curStu=null,curSession=null,archMode="stu",repScope=3;
 
 /* ---------- 基础工具 ---------- */
@@ -1379,6 +1646,9 @@ function logAct(act,target){
  if(DB.log.length>300)DB.log.length=300;save();
 }
 function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!==undefined)e.innerHTML=html;return e}
+/* 把一段「为什么这么设计」收进问号。界面上只留结论，想看原因再把鼠标放上去。
+   注意：只放设计解释；会看错数据的口径（如「带·不等于能力低」）仍留在明面上。 */
+function qh(tip){return '<span class="q" tabindex="0" data-tip="'+esc(String(tip||""))+'">?</span>'}
 /* 空状态的小鸟：没数据的时候最容易让人以为坏了，放个「在想」的样子，比一行冷字好 */
 function crowEmpty(img,html){
  var d=el("div","emptybird");
@@ -1565,7 +1835,7 @@ function closeNotice(){document.getElementById("notice").classList.add("hidden")
 /* ---------- 登录态与记住密码 ----------
    两个键分开存：SESS 决定"要不要重新登录"，RM 决定"登录框里填什么"。
    不要把密码塞进 DB——它会跟着整库备份被导出去。 */
-var VER="v2.6",RM_KEY="kq_login_v1",SESS_KEY="kq_session_v1";
+var VER="v2.7",RM_KEY="kq_login_v1",SESS_KEY="kq_session_v1";
 function rememberLogin(u,p){
  try{
   if(document.getElementById("rm").checked)localStorage.setItem(RM_KEY,JSON.stringify({u:u,p:p}));
@@ -1645,6 +1915,12 @@ var TOUR=[
   b:"截图可以直接 <span class='kbd'>Ctrl</span>+<span class='kbd'>V</span> 粘贴，一次多张也行。<br>手写 App 导出的 <b>PDF 也能直接传</b>：带文字层的会逐字读原文，不受清晰度影响；没有文字层的按图像识别走。"},
  {t:"选对是哪一节课",page:"p_upload",sel:"#tourLesson",img:"crow_work.jpg",
   b:"先选班，再选 学期 → 单元 → 课节。选对了，系统才知道拿哪份教案的课程目标来对照。<br>临时活动课选 <b>＋ 临时课节</b>，随便起个名就行。"},
+ {t:"接上模型（可选，但不接会难受）",page:"p_maint",
+  go:function(){go("p_maint")},
+  sel:"#ocrCard",img:"crow_work.jpg",
+  b:"读板书、写首课反馈、写沟通话术、写学情，背后都是同一把 key。不接也能用，只是板书要手工补录、学情只有规则稿。<br>"+
+    "三步：① 去服务商后台「创建 API key」，<b>建完那一刻复制</b>（之后列表里只剩打码串）② 粘进下面的「API key」③ 点「保存识别设置」，看到「key 尾 xxxx」就成了。<br>"+
+    "面板里那张表写着哪 4 个地方会调用模型、各用哪种模型。"},
  {t:"回来看孩子的档案",page:"p_archive",
   go:function(){archMode="stu";curClass=null;curStu=null;curSession=null;renderArchive()},
   sel:"#tourStuList",img:"crow_think.jpg",
@@ -1758,16 +2034,17 @@ window.addEventListener("resize",function(){
  if(cd&&TOUR[TSTEP])tourPaint(TOUR[TSTEP]);
 });
 /* 统一页面头：标题 + 一句人话，避免每个卡片各写一个小标题 */
-function pageHead(emoji,title,sub){
+function pageHead(emoji,title,sub,tip){
  var h=el("div","phead");
- h.innerHTML='<h1>'+esc(emoji+" "+title)+'</h1>'+(sub?'<p>'+esc(sub)+'</p>':"");
+ h.innerHTML='<h1>'+esc(emoji+" "+title)+'</h1>'+(sub?'<p>'+esc(sub)+(tip?qh(tip):"")+'</p>':(tip?'<p>'+qh(tip)+'</p>':""));
  return h;
 }
 
 /* ---------- 板书上传 ---------- */
 function buildUpload(){
  var p=document.getElementById("p_upload");p.innerHTML="";
- p.appendChild(pageHead("📝","上传板书","下课就传，攒到晚上一起传也行。截图直接粘、PDF 直接传，不用先转成图片。竖长的板书建议切成 2–4 段分开传：模型会把整张图压到约 1300×1300 像素，太长的话下半截字会糊。"));
+ p.appendChild(pageHead("📝","上传板书","下课就传，截图直接粘、PDF 直接传。",
+  "竖长的板书建议切成 2–4 段分开传：模型会把整张图压到约 1300×1300 像素，太长的话下半截字会糊。\n\n攒到晚上一起传也行，日期记得改成上课那天。"));
  var c1=el("div","card",'<h2>这节课</h2>');
  var f=el("div");f.id="tourLesson";
  f.innerHTML='<label class="fl">班级</label><select id="up_cls"></select>'+
@@ -1787,7 +2064,8 @@ function buildUpload(){
  var pdfBox=el("div");pdfBox.id="up_pdftext";
  var textHost=el("div");                 // 文字通道：PDF 自带文字层时，直接结构化，不走看图
  g.appendChild(drop);g.appendChild(inp);g.appendChild(th);g.appendChild(textHost);g.appendChild(pdfBox);
- g.appendChild(el("div","tips","<b>截图建议 ·</b> 按<b>话题</b>分段截图，同一个话题尽量放在一张图里。切在两张图中间时，句子会断，识别容易出错。<br><b>PDF ·</b> 一份 PDF 会按页拆成多张，页序就是图序。<b>带文字层的 PDF 直接读原文，逐字不差，不受图片清晰度影响</b>；扫描件没有文字层，只能走图像识别。<br><b>顺序 ·</b> 谁先谁后按你加入的先后排；如果顺序错了，点缩略图右上角的序号位置可以调换。"));
+ g.appendChild(el("div","tips","<b>按话题分段截图，别切断句子；带文字层的 PDF 直接读原文，不受清晰度影响。</b>"+
+  qh("一份 PDF 会按页拆成多张，页序就是图序。\n\n扫描件没有文字层，只能走图像识别，清晰度影响很大。\n\n顺序按你加入的先后排；错了点缩略图右上角的序号可以调换。")));
  var row=el("div","row");row.style.marginTop="14px";
  var run=el("button","btn","开始识别与切分");run.disabled=true;run.id="up_run";
  var clr=el("button","btn g","清空重来");
@@ -2292,7 +2570,7 @@ function renderDetect(host,opt){
  var whoAll=[];says.forEach(function(e){if(whoAll.indexOf(e.who)<0)whoAll.push(e.who)});
  var secT=el("div","sec");
  secT.appendChild(el("h3","","一、话题骨架（"+tl.length+" 个话题）"));
- secT.appendChild(el("p","muted","按板书上的话题标题切分。每个话题下列出谁说过话——<b>空白格比有内容更值得看</b>：一个孩子前面说得很好、后面整段沉默，比他说得少更需要你注意。"));
+ secT.appendChild(el("p","muted","按话题切分，每个话题下列出谁说过话。"+qh("空白格比有内容更值得看：一个孩子前面说得很好、后面整段沉默，比他说得少更需要你注意。")));
  var grid=el("div","tgrid");
  tl.forEach(function(t,ti){
   var said={};t.items.forEach(function(e){if(e.who!=="教师")said[e.who]=(said[e.who]||0)+1});
@@ -3258,7 +3536,7 @@ function renderMaint(){
  p.appendChild(pageHead("🗂","数据维护","清库、载入示例这种操作，平时不该出现在手边。放在这里，用之前先看清楚。"));
  var d=el("div","card",'<h2>当前库</h2>');
  d.innerHTML+='<p class="muted">'+DB.students.length+' 名学员 · '+DB.classes.length+' 个班级 · '+DB.sessions.length+' 节课次 · '+DB.reports.length+' 次总结留档 · '+DB.snapshots.length+' 份年度快照。</p>';
- d.innerHTML+='<p class="muted" style="margin-top:8px"><b>这套库存在哪：</b>'+originNote()+'</p>';
+ d.innerHTML+='<p class="muted" style="margin-top:8px">库存在这个网址的浏览器里：<b>'+esc(location.origin)+'</b>'+qh(originNote())+'</p>';
  var f=el("div","row");f.style.marginTop="14px";
  if(role==="admin"){
   var sd=el("button","btn sm g","载入示例数据（演示用）");
@@ -3291,11 +3569,18 @@ function renderMaint(){
  p.appendChild(d);
 
  /* 板书识别设置：接哪家模型、key 是什么，只存本机，不进备份文件 */
- var oc=el("div","card");
- oc.innerHTML='<h2>板书识别 · 接模型</h2>'+
-  '<p class="muted">不配 key 时，「上传板书」走占位通道：只有预置的 3 节示例课能出内容，其它课都是 0 条。配上支持图片的模型后，点「开始识别与切分」才会真的读板书。<br>'+
-  '<b>图片会离开这台电脑</b>，发给你在下面填的那家服务商；API key 只存在本机浏览器，不会写进备份文件。<br>'+
-  '学情写作走的是同一把 key：它不发图片，只把<b>学生原话</b>发出去，换回一段教师叙述。读图要视觉模型，写作只要语言模型——可以在「写作模型」里另填一个便宜些的。</p>';
+ var oc=el("div","card");oc.id="ocrCard";
+ var oh=el("h2","","接模型 · 读板书与写学情");
+ oh.innerHTML+=qh("不配 key 也能用：上传板书走占位通道——只有 3 节示例课能出内容，其它课是 0 条，学情只有规则草稿。\n\n配了之后：图片会离开这台电脑，发给你填的那家服务商；API key 只存在本机浏览器，不进备份文件。\n\n读图要视觉模型，写学情只要语言模型。可以分开填，写作挑个便宜的。");
+ oc.appendChild(oh);
+ // 老师最常问「到底哪些地方在花我的钱」，所以把调用点摆在面板最上面
+ var uses=[["上传板书 · 识别","读图，把板书拆成「谁说了什么」","视觉模型"],
+            ["首课反馈","把这一节的原话写成给家长的第一封信","语言模型"],
+            ["三步沟通话术","开场词 / 三个问题 / 建议与反问","语言模型"],
+            ["学情总结 · 家长版","规则稿打底，模型重写前三节","语言模型"]];
+ var ut=el("div","uses");
+ ut.innerHTML=uses.map(function(u){return '<div class="urow"><b>'+u[0]+'</b><span>'+u[1]+'</span><i>'+u[2]+'</i></div>'}).join("");
+ oc.appendChild(ut);
  var cfg=ocrCfg();
  function orow(label,input){
   var w=el("div","row");w.style.alignItems="center";
@@ -3364,10 +3649,8 @@ oc.appendChild(orow("模型名",md));
  });
  oc.appendChild(pr);
  oc.appendChild(el("p","subtle",
-  "预设只是把地址和模型名填进去，不会动你的 key。<br>"+
-  "key 和接口地址只认英文半角：粘进来时混了全角字母、中文标点或看不见的空格，浏览器会直接拒绝发请求（看起来像断网）。保存时会自动洗干净，但重新复制一次原文更稳。<br>"+
-  "DeepSeek 的模型名必须写 <b>deepseek-flash</b>：老的 deepseek-chat / deepseek-reasoner 已在 2026 年 7 月下线，deepseek-v4-pro 不支持图片。<br>"+
-  "智谱的接口不允许网页直接调（会报跨域），要用得先架个本地转发，暂时别选它。"));
+  "预设只填地址和模型名，不动你的 key。"+
+  qh("key 只认英文半角：混进全角字母、中文标点或看不见的空格，浏览器会拒发请求（看起来像断网），保存时会先洗干净再存。\n\nDeepSeek 的模型名必须写 deepseek-flash；老的 deepseek-chat / deepseek-reasoner 已在 2026 年 7 月下线，deepseek-v4-pro 不支持图片。\n\n智谱接口不允许网页直接调（跨域），暂时别选它。")));
 var orr=el("div","row");orr.style.marginTop="12px";
 var osv=el("button","btn sm","保存识别设置");
 var ost=el("button","btn sm g","测试连接");
@@ -3421,7 +3704,7 @@ ost.onclick=function(){
  var r=el("div","card",'<h2>回收站</h2><p class="muted">删除的学员不在这里，在「学员档案 → 回收站」里。删除只进回收站，可以恢复；彻底删除仅管理员可做。</p>');
  p.appendChild(r);
  var s2=el("div","card");
- s2.innerHTML='<h2>数据在哪 · 备份</h2><p class="muted">数据存在这台电脑的浏览器里（localStorage）。换电脑、换浏览器、清缓存、系统重装都会丢，<b>没有回收站能救</b>。所以在有服务器之前，靠文件备份。<br>建议每周导出一次，放进网盘或发给自己。</p>';
+ s2.innerHTML='<h2>数据在哪 · 备份</h2><p class="muted">存在这台电脑的浏览器里，<b>清缓存、换浏览器就没了，没有回收站能救</b>。建议每周导出一次。'+qh("数据存在 localStorage。换电脑、换浏览器、清缓存、系统重装都会丢。\n\n在服务器上线之前，靠文件备份：导出的 JSON 可以再从「从备份恢复」读回来。")+'</p>';
  var rb=el("div","row");rb.style.marginTop="13px";
  var eb=el("button","btn sm g","⬇ 导出整库备份");eb.onclick=exportAllData;
  var lr=el("label","btn sm","⬆ 从备份恢复");
@@ -3430,7 +3713,7 @@ ost.onclick=function(){
  lr.appendChild(rf);
  rb.appendChild(eb);rb.appendChild(lr);
  s2.appendChild(rb);
- s2.appendChild(el("p","subtle","备份文件是一份 JSON，里面含学员、班级、课次、总结留档，以及课程库的改动。<b>它没有加密</b>，存的时候注意别随手丢在公共电脑上。<br>课程库想单独在老师之间传递，用「课程档案 → 导入 / 导出课程库」。"));
+ s2.appendChild(el("p","subtle","备份是 JSON，<b>没有加密</b>，别丢在公共电脑上。"+qh("里面有学员、班级、课次、总结留档和课程库的改动，不含 API key。\n\n只想在老师之间传课程库，用「课程档案 → 导入 / 导出课程库」，比整库备份小得多。")));
  p.appendChild(s2);
 }
 
@@ -3495,7 +3778,7 @@ function renderClassHome(p){
  };
  f.appendChild(inp);f.appendChild(gs);if(os)f.appendChild(os);f.appendChild(btn);
  head2.appendChild(f);
- head2.appendChild(el("p","subtle","<b>学期</b>决定上传板书时默认挑哪个年级的课，建班时就选对，后面少改一次。班里还没人时点班级名进去，可以把已有学员加进来。"));
+ head2.appendChild(el("p","subtle","学期决定上传板书时默认挑哪个年级的课，建班时选对。"+qh("选错了也能改，只是每次上传都要多切一次年级。\n\n班里还没人时点班级名进去，可以把已有学员加进来。")));
  p.appendChild(head2);
 }
 
@@ -3551,7 +3834,7 @@ function renderStudentList(p){
   save();logAct("学员加入班级",c.name+" / "+s.name+(bnv&&bnv!==s.name?"（板书 "+bnv+"）":""));renderArchive();
  };
  f.appendChild(pick);f.appendChild(bn3);f.appendChild(ab);head.appendChild(f);
- head.appendChild(el("p","subtle","这里只做「把已有的人加进来」，他原来的班保留（多班并存）。真正的新学员请到「按学员」页新建——在班里直接建容易给同一个孩子建出第二份档案。<br>板书名只在这个班生效：同一个孩子周中班写「朵朵」、周末班写「朵朵A」，两边的识别各认各的。"));
+ head.appendChild(el("p","subtle","只把已有学员加进来；新学员请到「按学员」新建。"+qh("在班里直接建，容易给同一个孩子建出第二份档案。\n\n加入是并存：他原来的班保留，两边的课都会进他的档案。\n\n板书名只在这个班生效——同一个孩子周中班写「朵朵」、周末班写「朵朵A」，识别时各认各的。")));
  p.appendChild(head);
 }
 
@@ -3705,7 +3988,7 @@ function firstFeedbackCard(s){
    b.onclick=function(){genFirstFeedback(s.id,pick.value)};
    row.appendChild(b);
    c.appendChild(row);
-   c.appendChild(el("p","muted","默认选最早一节。如果那一节他几乎没说话，换一节素材更足的——但别换成你已经带着他练过好几轮的那节，那写出来就不是「首课」了。"));
+   c.appendChild(el("p","muted","默认最早一节。"+qh("那一节他几乎没说话就换一节素材更足的——但别换成已经带他练过好几轮的那节，那写出来就不是「首课」了。")));
   }else{
    c.appendChild(el("p","muted","这些课的板书里都没有"+esc(s.name)+"的发言记录。首课反馈必须基于原话，没有就编不出来——先把板书补上，或者确认板书上的昵称有没有对上。"));
    var row2=el("div","ops");
@@ -3853,7 +4136,7 @@ function firstFeedbackCard(s){
    });
    c.appendChild(el("p","muted","只留最近 3 版。恢复也占一版，别反复来回切。"));
  }
- c.appendChild(el("p","muted","只有一节课的素材，所以这里不谈「进步」和「水平」，只谈这一次他是怎么想的。要谈趋势，用下面的「生成学情总结」。"));
+ c.appendChild(el("p","muted","这一栏只谈这一节课他是怎么想的；要谈趋势，用下面的「生成学情总结」。"));
  return c;
 }
 
@@ -3878,6 +4161,8 @@ function renderStudentSessions(p){
  p.appendChild(head);
  // 首课反馈紧跟在基本信息后面：第一次沟通发生在第 1 节之后，不在攒够 N 节之后
  p.appendChild(firstFeedbackCard(s));
+ // 话术是独立一张：不写首课反馈也能直接发家长，别拿流程拦人
+ p.appendChild(scriptCard(s));
 
  // 课堂记录与生成区单独一张卡，免得把首课反馈挤到下面去
  var hcard=el("div","card");
@@ -3910,7 +4195,7 @@ function renderStudentSessions(p){
  // 注意顺序：先挂进页面再画，否则 getElementById 拿不到容器
  var dc=dimCard(s);
  p.appendChild(dc);
- radar(radarOf(s),null,"radar_stu");
+ radar(radarOf(s),null,"radar_stu",dimStats(s.id));
 
  var sns=DB.snapshots.filter(function(x){return x.studentId===s.id});
  var sc2=el("div","card",'<h2>年度快照（长期保留）</h2>');
@@ -4132,19 +4417,20 @@ function sessionDeleteCard(s){
 function dimCard(s){
  var ss=sessionsOfStudent(s.id),ab=absentOf(s.id);
  var c=el("div","card");
- c.appendChild(el("h2","","八维信号"));
- c.appendChild(el("p","muted","从这 "+ss.length+" 节课的原话里推出来，每条都能翻回原句。"+
-  (ab.length?" 缺勤 "+ab.length+" 次已从观察机会里剔除。":"")+
-  " 带「·」的轴是本窗口观察机会不足，贴着中心画，<b>不代表能力低</b>。"));
+ var h2=el("h2","","八维信号");
+ h2.innerHTML+=qh("从这 "+ss.length+" 节课的原话里逐条推出来，每条都能翻回原句"+(ab.length?"；缺勤 "+ab.length+" 次已从观察机会里剔除":"")+"。\n\n带「·」的轴＝本窗口观察机会不足，贴着中心画，不代表能力低。\n\n鼠标停在轴上：看这一维具体指什么、本窗口有几条证据。");
+ c.appendChild(h2);
+ c.appendChild(el("p","muted","带「·」＝本窗口没证据，不是能力低；鼠标停在轴上看释义。"));
 
  var box=el("div","row");box.style.alignItems="flex-start";box.style.marginTop="10px";
  var left=el("div");left.style.flex="1";left.style.minWidth="290px";
  var rv=el("div");rv.id="radar_stu";left.appendChild(rv);
- left.appendChild(el("p","muted","实线＝本窗口信号；虚线＝上一份年度快照。给家长看趋势，不给绝对值。"));
+ left.appendChild(el("p","muted","实线＝本窗口　虚线＝上一份年度快照"));
 
  var right=el("div");right.style.width="240px";right.style.flex="0 0 240px";
- right.appendChild(el("h3","","Level"));
- right.appendChild(el("p","muted","现在是 "+(s.level||"L1")+"，由三档换算得来，你可以直接改。可升可降，下降只记在教师侧，不给孩子看。"));
+ var h3=el("h3","","Level "+(s.level||"L1"));
+ h3.innerHTML+=qh("由三档换算得来，你可以直接改。可升可降；下降只记在教师侧，不给孩子看，也不进家长版。\n\n它只是一个工作档位，不是评级——同一档里孩子的差别可能比跨档还大。");
+ right.appendChild(h3);
  var sel=el("select");sel.id="lvSel";
  LVLS.forEach(function(l){var o=el("option","",l);o.value=l;if(l===(s.level||"L1"))o.selected=true;sel.appendChild(o)});
  sel.style.width="100%";sel.style.marginTop="8px";
@@ -4160,7 +4446,7 @@ function dimCard(s){
  c.appendChild(box);
  return c;
 }
-function radar(base,prev,hostId){
+function radar(base,prev,hostId,stats){
  if(typeof base==="string")base=radarOf(stu(base)||{name:base,id:base});
  if(!base||!base.length)base=[0,0,0,0,0,0,0,0];
  // 0 = 观察机会不足：贴着中心画，不假装成"很低"
@@ -4171,15 +4457,20 @@ function radar(base,prev,hostId){
  var axes="";
  for(var i=0;i<n;i++){var a=-Math.PI/2+i*2*Math.PI/n;
   axes+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+R*Math.cos(a)).toFixed(1)+'" y2="'+(cy+R*Math.sin(a)).toFixed(1)+'" stroke="#EAE6DD"/>';
-  var noData=base[i]===0;
-  axes+='<text x="'+(cx+(R+16)*Math.cos(a)).toFixed(1)+'" y="'+(cy+(R+16)*Math.sin(a)).toFixed(1)+'" font-size="10" fill="'+(noData?"#C6C1B6":"#8E9399")+'" text-anchor="middle">D'+(i+1)+(noData?"·":"")+'</text>';}
+  var noData=base[i]===0,lx=cx+(R+16)*Math.cos(a),ly=cy+(R+16)*Math.sin(a);
+  axes+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" font-size="10" fill="'+(noData?"#C6C1B6":"#8E9399")+'" text-anchor="middle">D'+(i+1)+(noData?"·":"")+'</text>';
+  // 轴名本身太小，鼠标不容易停在上面：盖一个透明热区，悬停显示这条轴是什么意思
+  axes+='<circle class="axh" data-i="'+i+'" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="15" fill="transparent" style="cursor:help"/>';}
  for(var k=2;k<=8;k+=2){var rr=R*k/8,poly=[];for(var j=0;j<n;j++){var a2=-Math.PI/2+j*2*Math.PI/n;poly.push((cx+rr*Math.cos(a2)).toFixed(1)+","+(cy+rr*Math.sin(a2)).toFixed(1))}
   axes+='<polygon points="'+poly.join(" ")+'" fill="none" stroke="#F0EDE6"/>';}
  var svg=axes;
  if(prev)svg+='<polygon points="'+pts(prev)+'" fill="none" stroke="#B9B4A8" stroke-dasharray="4 3"/>';
  svg+='<polygon points="'+pts(now)+'" fill="rgba(62,82,115,.13)" stroke="var(--p)" stroke-width="1.4"/>';
  var elx=document.getElementById(hostId||"radar");
- if(elx)elx.innerHTML='<svg viewBox="0 0 320 300" width="100%" style="max-width:330px">'+svg+'</svg>';
+ if(elx){
+  elx.innerHTML='<svg viewBox="0 0 320 300" width="100%" style="max-width:330px">'+svg+'</svg>';
+  dimTooltip(elx,stats||null);
+ }
 }
 
 /* ---------- 学情与家长版（两步：内部版 → 家长版） ---------- */
@@ -4217,7 +4508,7 @@ function renderReport(){
 function renderReportInternal(p){
  var c=el("div","card");c.id="tourReport";
  c.appendChild(el("h2","","读哪一段"));
- c.appendChild(el("p","muted","先选孩子，再点一个数字——<b>点「近 3 节」就是把这 3 节合成一份汇报</b>。按有记录的课次算，不按自然月：缺课不会把窗口拉长。"));
+ c.appendChild(el("p","muted","选孩子，再选一个窗口。"+qh("「近 3 节」＝把这 3 节合成一份汇报。按有记录的课次算，不按自然月：缺课不会把窗口拉长。")));
  var f=el("div","row");f.style.marginTop="12px";
  var ss=el("select");ss.id="repStu";ss.style.minWidth="128px";
  activeStudents().forEach(function(s){
@@ -5072,7 +5363,7 @@ function courseMaintainCard(){
    (hh.dupBase.length?" · 库里有编号重复":""))));
  var bd=el("div","body");
  bd.appendChild(el("p","muted",
-  "课程库是<b>一人一份</b>存在各自电脑上。要把自己的改动给别人、或者接收统一优化后的课程库，就用下面的文件。"+
+  "课程库一人一份，你改的是本机这份。"+qh("要把自己的改动给别人、或者接收统一优化后的课程库，就用下面的文件。")+
   "<br>你这台电脑上：修改 "+hh.mods+" 节 · 删除 "+hh.dels+" 节 · 新增 "+hh.adds+" 节"+
   (hh.miss.length?"　<span style='color:#c0392b'><b>"+hh.miss.length+" 条改动指向的课节已经不在当前课程库里</b>（换过课程库文件时会这样），这些改动会失效。</span>":"")));
 
@@ -5092,8 +5383,8 @@ function courseMaintainCard(){
  bd.appendChild(r2);
 
  bd.appendChild(el("p","subtle",
-  "「导出课程库」给的是<b>你现在看到的样子</b>（已经含你的改动），别人导入后和你完全一致——统一发新版就用这份。"+
-  "<br>「导出我的改动」只给<b>差异部分</b>，体积小，方便汇总到表格里再统一更新。它不能当整库导入。"
+  "导出的是<b>你现在看到的样子</b>，已含你的改动。"+
+  qh("「导出课程库」别人导入后和你完全一致——统一发新版就用这份。\n\n「导出我的改动」只给差异部分，体积小，方便汇总到表格里再统一更新；它不能当整库导入。")
   +(hh.dupByMe.length?"<br><span style='color:#c0392b'><b>你新增的课节用了已有编号（"+hh.dupByMe.slice(0,5).join("、")+"）：上传选课时会对错课，建议换个编号。</b></span>":"")
   +(hh.dupBase.length?"<br><span class='subtle'>另外，<b>课程库本身</b>就有 "+hh.dupBase.length+" 个编号重复（"+hh.dupBase.slice(0,5).join("、")+"），不是你改出来的。同一个编号对应两节课时，选课只会落到靠前的那节——建议在课程表格里删掉重复的一行。</span>":"")));
  d.appendChild(bd);
@@ -5122,8 +5413,8 @@ function renderCourse(){
  ab.onclick=addLessonDialog;
  hd.appendChild(ab);
  c.appendChild(hd);
- c.appendChild(el("p","muted","学期 → 单元 → 课节。教学目标与核心问题链取自教案档案，待排、待开发、已废弃的课不在此列。"+
-  "<b style='color:var(--text)'>课程内容可以自己改，也能加减课节。</b>改动只存在这台电脑上，不会影响别的老师；要同步就往下用「导入 / 导出」。"));
+ c.appendChild(el("p","muted","学期 → 单元 → 课节。课程内容可以自己改，也能加减课节。"+
+  qh("教学目标与核心问题链取自教案档案，待排、待开发、已废弃的课不在此列。\n\n改动只存在这台电脑上，不会影响别的老师；要同步就往下用「导入 / 导出」。")));
 
  /* 年级筛选：一行药丸，点一下就只剩那个年级 */
  var bar=el("div","filters");bar.style.marginTop="14px";
