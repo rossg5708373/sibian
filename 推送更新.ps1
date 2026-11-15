@@ -28,6 +28,9 @@ if (-not (Test-Path (Join-Path $PSScriptRoot "index.html"))) {
   Finish 1 "[X] 这个目录里没有 index.html，脚本要放在项目根目录" "Red"
 }
 
+# 2.5 让中文文件名正常显示（不影响功能）
+& $git config core.quotepath false 2>$null | Out-Null
+
 # 3. 有没有东西要传
 $changes = @(& $git status --porcelain)
 if ($changes.Count -eq 0) {
