@@ -3,3 +3,15 @@ _tests/
 node_modules/
 Thumbs.db
 *.bak_v*
+# --- 本地数据与调试产物（不进公开仓库）---
+_board/
+_board_new/
+_out/
+_samples/
+_tests/
+_runt*.js
+_run*.js
+_peek.js
+_scanTabs.js
+_retest_prev_backup.json
+*.bak_v*
